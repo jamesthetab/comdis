@@ -1,1 +1,1 @@
-Testing the readme file
+Here's a repository for code that we can use to edit eachother's code a bit more conveniently, and experiment with changing code without needing to worry about losing the original unedited scripts. Plus, we can make comments a bit easier here compared to having a bunch of e-mail strings. 
