@@ -12,8 +12,8 @@
 # dX <- (B %*% X) + X[vec]*(A %*% X)
 
 # e.g. in a 2-species case
-# X is a vector of classes for each species (S1, I1, R1, S2,...RN)
-# X[vec] is a vector of susceptible classes (S1, S1, S1, S2, S2, S2,..SN)
+# X is a vector of classes for each species (S1, I1, R1, S2, I2, R2)
+# X[vec] is a vector of susceptible classes (S1, S1, S1, S2, S2, S2)
 
 #     [0 -B11  0  0  -B12  0]
 #     [0  B11  0  0   B12  0]
