@@ -1,7 +1,7 @@
 ################
 ### ComDis() ###
 ################
-
+# Last edited Nov 1 to allow use of kWeightPenalty
 ### Purpose ###
 # Iteratively disassemble communities until they reach 2 species.
 
@@ -13,13 +13,17 @@
 #  as species are added), or "fixed" (community K is fixed, and abundances are
 #  adjusted to sum to community K, while relative abundances do not change).
 # start: maximum species richness
+# kWeightPenalty: A constant that determines the strength of weight-dependence 
+#  in the sampling of communities. If kWeightPenalty > 0, small bodied species
+#  are more likely to be sampled. If kWeightPenalty = 0, then there is no bias.
 
 ### Output ###
 # A list containing the Kmethod used, relevant output for each iteration, 
 # and community composition for each iteration.
 
 ComDis <- function(globalpool, mode,
-                   iter = 100, Kmeth = "free", start = length(globalpool[, 1])) {
+                   iter = 100, Kmeth = "free", 
+									 kWeightPenalty = 0) {
   richness <- NULL
   Ro <- NULL
   shannondiv <- NULL
@@ -28,69 +32,44 @@ ComDis <- function(globalpool, mode,
   inner.iteration <- NULL
   J <- NULL
   globalpool <- globalpool$global.pool
+  start <- nrow(globalpool)
   all.data <- NULL
   all.composition <- NULL
-  if (Kmeth == "free") {
-    for (j in 1:iter) {
-      com <- sample(1:nrow(globalpool), size = start, replace = F)
-      out <- matrix(NA, ncol = length(com), nrow = length(com) - 1)
-      # Inner for-loop disassembles the community until there are 2 species
-      for (i in 1:(length(com) - 1)) {
-        if (i == 1) { # for the first iteration, we start with out starting community
-          out[i, 1:(length(com))] <- com
-        } else { # otherwise, delete one species 
-          out[i, 1:(length(com) - (i - 1))] <- sample(out[(i - 1), which(out[(i - 1), ] != "NA")], 
-                                                      size = (length(com) - (i - 1)), replace = F)
-        }
-        ids <- out[i, which(out[i, ] != "NA")] # Store species ID's
-        traits <- globalpool[ids, ] # extract species traits
-        pshan <- traits[, 5] / sum(traits[, 5]) # relative abundance
-        shannondiv[i] <- -(sum((pshan) * log(pshan))) 
-        richness[i] <- nrow(traits)
-        density[i] <- sum(traits[, 5])
-        inner.iteration[i] = i  
-        outer.iteration = rep(j, length(inner.iteration))
-        Ro[i] <- CommunityR0(traits, mode)
-        df <- cbind(outer.iteration, inner.iteration, richness, density, shannondiv, Ro)
-      }
-      all.data <- rbind(all.data, df)
-      all.composition <- rbind(all.composition, out)
-    }
-  }
   
-  if (Kmeth == "fixed") {
-    for (j in 1:iter) {
-      Kcom =2 * max(globalpool[, 5])
-      com <- sample(1:nrow(globalpool), size = start, replace = F)
-      out <- matrix(NA, ncol = length(com), nrow = length(com) - 1)
-      # Inner for-loop disassembles the community until there are 2 species
-      for (i in 1:(length(com) - 1)) {
-        if (i == 1) { # for the first iteration, we start with out starting community
-          out[i, 1:(length(com))] <- com
-        } else { # otherwise, delete one species
-          out[i, 1:(length(com) - (i - 1))] <- sample(out[(i - 1), which(out[(i - 1), ] != "NA")], 
-                                                      size = (length(com) - (i - 1)), replace = F)
-        }
-        ids <- out[i, which(out[i, ] != "NA")] # store species IDs
-        traits <- globalpool[ids,] # get species traits
-        Kscale <- Kcom / sum(traits[, 5]) # caclulate K scaling parameter
-        traits[, 5] <- traits[, 5] * Kscale # scale abundances
-        pshan <- traits[, 5] / sum(traits[, 5]) # relative abundances
-        shannondiv[i] <- -(sum((pshan) * log(pshan))) 
-        richness[i] <- nrow(traits)
-        density[i] <- sum(traits[, 5])
-        inner.iteration[i] = i  
-        outer.iteration = rep(j, length(inner.iteration))
-        Ro[i] <- CommunityR0(traits, mode)
-        df <- cbind(outer.iteration, inner.iteration, richness, density, shannondiv,Ro)
+  for (j in 1:iter) {
+    com <- sample(1:nrow(globalpool), size = start, replace = F)
+    out <- matrix(NA, ncol = length(com), nrow = length(com) - 1)
+    # Inner for-loop disassembles the community until there are 2 species
+    for (i in 1:(length(com) - 1)) {
+      if (i == 1) { # for the first iteration, we start with out starting community
+        out[i, 1:(length(com))] <- com
+      } else { # otherwise, delete one species 
+        out[i, 1:(length(com) - (i - 1))] <- sample(out[(i - 1), which(out[(i - 1), ] != "NA")], 
+                                                    size = (length(com) - (i - 1)), replace = F,
+        																						prob = traits$weight ^ - kWeightPenalty)
       }
-      all.data <- rbind(all.data, df)
-      all.composition <- rbind(all.composition, out)
+      ids <- out[i, which(out[i, ] != "NA")] # Store species ID's
+      traits <- globalpool[ids, ] # extract species traits
+      if (Kmeth == "fixed"){
+      	Kcom =2 * max(globalpool[, 5])
+      	Kscale <- Kcom / sum(traits[, 5]) # caclulate K scaling parameter
+      	traits[, 5] <- traits[, 5] * Kscale # scale abundances
+      }
+      pshan <- traits[, 5] / sum(traits[, 5]) # relative abundance
+      shannondiv[i] <- -(sum((pshan) * log(pshan))) 
+      richness[i] <- nrow(traits)
+      density[i] <- sum(traits[, 5])
+      inner.iteration[i] = i  
+      outer.iteration = rep(j, length(inner.iteration))
+      Ro[i] <- CommunityR0(traits, mode)
+      df <- cbind(outer.iteration, inner.iteration, richness, density, shannondiv, Ro)
     }
+    all.data <- rbind(all.data, df)
+    all.composition <- rbind(all.composition, out)   
   }
   
   J <- all.data[, 5] / log(all.data[, 3]) # evenness
-  all.data <- data.frame(cbind(all.data, J))
+  all.data <- cbind(all.data, J)
   d <- list(Kmeth = Kmeth, pool=globalpool, all.data = all.data, 
             all.composition = all.composition)
   class(d) <- "ComDis"
@@ -106,8 +85,9 @@ plot.ComDis <- function(run) { # Plots disassembly trajectories for "ComDis" obj
   iter <- max(run$all.data[, 1])
   chart_title <- substitute(paste("Simulation results: ", iter, " iterations", sep=""),
                             list(iter = iter))
-  ggplot(run$all.data, aes(richness, Ro, group = outer.iteration)) +
-    geom_line(alpha = ifelse(iter <= 50, 1, exp(-0.005 * iter) + .05)) +
+  ggplot(run$all.data) + 
+    geom_line(aes(richness, Ro, group = outer.iteration),
+    					alpha = ifelse(iter <= 50, 1, exp(-0.005 * iter) + .05)) +
     labs(x = "Species richness", y = "Ro") +
     labs(title = chart_title) +
     coord_trans(y = "log10") +
@@ -118,5 +98,6 @@ plot.ComDis <- function(run) { # Plots disassembly trajectories for "ComDis" obj
 
 #------------------------------------------------------------------------------
 # Example
-dis1<-ComDis(poolA,iter=1000,Kmeth="fixed", mode="dens")
+poolA <- GPool(Nglobal=3, globmeth="allom")
+dis1<-ComDis(poolA,iter=100,Kmeth="free", mode="freq")
 plot(dis1)
