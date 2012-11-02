@@ -85,7 +85,7 @@ plot.ComDis <- function(run) { # Plots disassembly trajectories for "ComDis" obj
   iter <- max(run$all.data[, 1])
   chart_title <- substitute(paste("Simulation results: ", iter, " iterations", sep=""),
                             list(iter = iter))
-  ggplot(run$all.data) + 
+  ggplot(data.frame(run$all.data)) + 
     geom_line(aes(richness, Ro, group = outer.iteration),
     					alpha = ifelse(iter <= 50, 1, exp(-0.005 * iter) + .05)) +
     labs(x = "Species richness", y = "Ro") +
@@ -98,6 +98,6 @@ plot.ComDis <- function(run) { # Plots disassembly trajectories for "ComDis" obj
 
 #------------------------------------------------------------------------------
 # Example
-poolA <- GPool(Nglobal=3, globmeth="allom")
+poolA <- GPool(Nglobal=6, globmeth="allom")
 dis1<-ComDis(poolA,iter=100,Kmeth="free", mode="freq")
 plot(dis1)
