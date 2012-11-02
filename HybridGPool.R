@@ -76,7 +76,8 @@ HybridGPool <- function(Y=10, modalO=3, z=0.1, a=2, b=1, m=1.5){
 
 ##### EXAMPLE #####
 poolA<-HybridGPool()
-run<-ComSim(poolA, iter=1000, comsizes = c(2:poolA$Nglobal), mode="freq", Kmeth="free")
+run<-ComSim(poolA, iter=1000, comsizes = c(2:poolA$Nglobal), mode="freq", Kmeth="fixed",
+            SampleMass=T)
 plot(run, method="raw")
 plot(run, method="adj")
 plot(run, "even")

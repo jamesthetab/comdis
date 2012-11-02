@@ -20,7 +20,7 @@
 # number of iterations, range of community richness values, community K method,
 # and a data frame with info on each iteration. 
 
-ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:20), Kmeth="free"){
+ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:20), Kmeth="free", SampleMass=TRUE){
   richness <- NULL
   Ro <- NULL
   shannondiv <- NULL
@@ -34,7 +34,11 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:20), Kmeth="free"){
     for (j in 1:iter) {
       #Assign community members randomly
       comsize <- ifelse(length(comsizes) != 1, sample(comsizes, size=1), comsizes) 
-      com <- c(sample(c(1:nrow(globalpool)), size = comsize, replace = F)) # ID's
+      if (SampleMass==TRUE){ #If TRUE, sample with probability proportional to abundance
+        com <- sample(c(1:nrow(globalpool)), size = comsize, replace = F, prob=(globalpool[,5]/100))
+      } else {
+        com <- sample(c(1:nrow(globalpool)), size = comsize, replace = F) # ID's
+      }
       comtraits <- globalpool[com, ] # extract species traits
       pshan <- comtraits[, 5] / sum(comtraits[, 5]) # relative abundance
       shannondiv[j] <- -(sum((pshan) * log(pshan))) 
@@ -51,7 +55,11 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:20), Kmeth="free"){
       Kcom = 2 * max(globalpool[, 5])  # Community K = 2*max(K) for global pool
       #Assign community members randomly
       comsize <- ifelse(length(comsizes) != 1, sample(comsizes, size=1), comsizes)
-      com <- c(sample(c(1:nrow(globalpool)), size = comsize, replace = F)) # ID's
+      if (SampleMass==TRUE){ #If TRUE, sample with probability proportional to abundance
+        com <- sample(c(1:nrow(globalpool)), size = comsize, replace = F, prob=(globalpool[,5]/100))
+      } else {
+        com <- sample(c(1:nrow(globalpool)), size = comsize, replace = F) # ID's
+      } 
       comtraits <- globalpool[com, ] # Get species traits for each community member
       # Adjust K's to make the sum of species K = community K, with abundances 
       # proportional to their relative abundances
@@ -72,7 +80,11 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:20), Kmeth="free"){
     Kcom = 2 * max(globalpool[, 5])  # community K = 2*max(K) for global pool
     for (j in 1:iter) {
       comsize <- max(comsizes)
-      com <- c(sample(c(1:nrow(globalpool)), size = comsize, replace = F))
+      if (SampleMass==TRUE){ #If TRUE, sample with probability proportional to abundance
+        com <- sample(c(1:nrow(globalpool)), size = comsize, replace = F, prob=(globalpool[,5]/100))
+      } else {
+        com <- sample(c(1:nrow(globalpool)), size = comsize, replace = F) # ID's
+      }
       comtraits <- globalpool[com, ] # starting community
       while (sum(comtraits[, 5]) >= Kcom) { 
         del <- sample(nrow(comtraits), size = 1, replace = F) # choose a row
@@ -96,6 +108,7 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:20), Kmeth="free"){
             iter = iter,
             comsizes = comsizes, 
             Kmeth = Kmeth,
+            SampleMass = SampleMass,
             data = as.data.frame(cbind(richness, Ro, shannondiv, J, density, iteration, 
                                        dens.adj.rich)), 
             composition = as.data.frame(composition))
@@ -165,7 +178,7 @@ plot.ComSim <- function(run, method = "rich") { # plots "ComSim" objects
 # Examples
 
 poolA<-GPool(globmeth="allom")
-run<-ComSim(poolA, iter=1000, mode="freq", Kmeth="fixed")
+run<-ComSim(poolA, iter=1000, mode="freq", Kmeth="fixed", SampleMass=TRUE)
 plot(run, method="raw")
 plot(run, method="adj")
 plot(run, "even")
