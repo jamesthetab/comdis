@@ -6,7 +6,7 @@
 #Dobson 2004. 
 
 
-HybridGPool <- function(Y=10, modalO=3, z=0.1, a=2, b=1, m=1.5){
+HybridGPool <- function(Y=10, modalO=2, z=0.1, a=2, b=1, m=1.5, kRecovery=1){
   
   #Start by generating a community based on Preston's law
   from <- 1
@@ -24,9 +24,6 @@ HybridGPool <- function(Y=10, modalO=3, z=0.1, a=2, b=1, m=1.5){
     Abund <- c(Abund, rep(Plog2[i], S[i]))
     Rank <- c(Rank, rep(P[i], S[i]))
   }
-  #Prepare masses, based on ranks (octaves)
-  logM <- a - b*log(Rank)
-  M <- 10^logM
   
   #Assemble Species Traits:
   species <- mat.or.vec(length(Abund), 10) # initialize matrix
@@ -45,16 +42,18 @@ HybridGPool <- function(Y=10, modalO=3, z=0.1, a=2, b=1, m=1.5){
       species[i, 5] <- Abund[i]
       species[i, 4] <- 0.01 # density dependence assumed equal across species
       # Weights from Preston's law (octaves):
-      species[i, 9] <- M[i]
-      # Birth rate = r + mu = 0.6w^-0.27 + 0.4w^-0.26 
-      species[i, 2] <- 0.6 * species[i, 9] ^ -0.27 + 0.4 * species[i, 9] ^ -0.26
-      # Death rate = 0.4w^-0.26
-      species[i, 3] <- 0.4 * species[i, 9] ^ -0.26  
+      species[i, 9] <- 10^(a - b*log(Rank[i]))
+      # Birth rate = 0.6*M^(-0.27) (Roche)
+      species[i, 2] <- 0.6*(species[i, 9]^(-0.27))
+      # Death rate = Birth rate (Roche)
+      species[i, 3] <- species[i, 2] 
       species[i, 6] <- (m - 1) * species[i, 3] # virulence: alpha=(m-1)*mu 
-      species[i, 7] <- species[i, 3] # recovery rate assumed to scale with body size as mu
+      # recovery rate assumed to scale with body size and a fraction of lifespan (kRecovery)
+      species[i, 7] <- kRecovery * species[i, 3]
       # Intraspecific transmission rate Bii=0.0247*Ro(m+(recovery rate/mu))*w^0.44
-      species[i, 8] <- R0ii[i] * 0.0247 * (m + species[i, 7] / species[i, 3]) * species[i, 9]^0.44 
       species[i, 10] <- R0ii[i] # store R0ii for each species
+      # Intraspecific transmission rate Bii=(R0(death rate + virulence + recovery))/K
+      species[i, 8] <- (species[i, 10]* (species[i, 3] + species[i, 6] + species[i, 7])) / species[i, 5]
     }
   
   
@@ -71,14 +70,26 @@ HybridGPool <- function(Y=10, modalO=3, z=0.1, a=2, b=1, m=1.5){
        a = a,
        b = b,
        m = m,
+       kRecovery = kRecovery,
        global.pool = data.frame(species))
 }
 
 ##### EXAMPLE #####
-poolA<-HybridGPool()
-run<-ComSim(poolA, iter=1000, comsizes = c(2:poolA$Nglobal), mode="freq", Kmeth="fixed",
-            SampleMass=T)
+poolA<-HybridGPool(kRecovery=10, modalO=3, Y=10, z=0.25)
+run<-ComSim(poolA, iter=1000, comsizes = c(2:poolA$Nglobal), mode="dens", Kmeth="saturate",
+            SampleMass=F)
 plot(run, method="raw")
 plot(run, method="adj")
 plot(run, "even")
 plot(run, "rich")
+
+quartz(width=6, height=4)
+ggplot(run$data, aes(x=richness, y=Ro))+
+  geom_point()+
+  geom_smooth()+
+  theme_bw()+
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank())+
+  labs(x="Species Richness",
+       y=expression(paste("Community", " ", R[0])))+
+  #geom_hline(y=1, linetype=2)+
+  ggtitle("Density-dep Trans, Kmeth='saturate'")
