@@ -1,8 +1,8 @@
 ################
 ### ComSim() ###
 ################
-# Edited Nov. 6 MJ: Incorporated Joe's Kmeth="saturate", removed Kmeth="thresh"
-# since we weren't using it, a few minor code clean-ups.
+# Edited Nov. 11 MJ: Added calculation of maximum prevalence when birth rates =
+# death rates (as with HybridGPool), progress bar, cij as function argument.
 
 ### Purpose ###
 # Randomly draw species from a global pool to produce simulated communities and
@@ -19,6 +19,8 @@
 # SampleMass: Can be TRUE or FALSE, determines whether sampling of species occurs
 #   with probabilities proportional to abundance, with more abundant species
 #   more likely to be sampled. 
+# cij: a scaling parameter that determines strength of interspecific transmission
+#  where Bij = cij * (Bii+Bjj)/2 following Dobson 2004
 
 ### Output ###
 # A list containing relevant info on inputs including which global pool used,
@@ -26,15 +28,17 @@
 # whether SampleMass was T or F, and a data frame with info on each iteration. 
 
 ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal), 
-									 Kmeth="free", SampleMass=F){
+									 Kmeth="free", SampleMass=F, cij=0.05){
   richness <- NULL
   Ro <- NULL
   shannondiv <- NULL
   density <- NULL
   iteration <- NULL
   J <- NULL
+  maxprev <- NULL
   composition <- matrix(NA, nrow = iter, ncol = max(comsizes))
   globalpool <- globalpool$global.pool # Extract species data from globalpool list
+  bar <- txtProgressBar (min = 0, max = iter, style = 3)
   
   if (Kmeth == "free") {
     for (j in 1:iter) {
@@ -52,8 +56,11 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
       richness[j] <- nrow(comtraits)
       density[j] <- sum(comtraits[, 5])
       iteration[j] = j  
-      Ro[j] <- CommunityR0(comtraits, mode)
+      Ro[j] <- CommunityR0(comtraits, mode, cij=cij)
+      maxprev[j] <- ifelse(all(comtraits[, 2] != comtraits[, 3]), # only valid when b=d
+      										 NA, MatSIR(comtraits, mode, cij=cij))
       composition[j, 1:length(com)] <- com
+      setTxtProgressBar (bar, j)
     }
   }
   
@@ -78,8 +85,11 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
       richness[j] <- nrow(comtraits)
       density[j] <- sum(comtraits[, 5])
       iteration[j] = j
-      Ro[j] <- CommunityR0(comtraits, mode)
+      Ro[j] <- CommunityR0(comtraits, mode, cij=cij)
+      maxprev[j] <- ifelse(all(comtraits[, 2] != comtraits[, 3]), # only valid when b=d
+      										 NA, MatSIR(comtraits, mode, cij=cij))
       composition[j, 1:length(com)] <- com
+      setTxtProgressBar (bar, j)
     }
   }
   
@@ -104,8 +114,11 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
   		richness[j] <- nrow(comtraits)
   		density[j] <- sum(comtraits[, 5])
   		iteration[j] = j
-  		Ro[j] <- CommunityR0(comtraits, mode)
+  		Ro[j] <- CommunityR0(comtraits, mode, cij=cij)
+  		maxprev[j] <- ifelse(all(comtraits[, 2] != comtraits[, 3]), # only valid when b=d
+  												 NA, MatSIR(comtraits, mode, cij=cij))
   		composition[j, 1:length(com)] <- com
+  		setTxtProgressBar (bar, j)
   	}
   }
     
@@ -122,7 +135,7 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
             comsizes = comsizes, 
             Kmeth = Kmeth,
             SampleMass = SampleMass,
-            data = as.data.frame(cbind(richness, Ro, shannondiv, J, density, iteration, 
+            data = as.data.frame(cbind(richness, Ro, maxprev, shannondiv, J, density, iteration, 
                                        dens.adj.rich)), 
             composition = as.data.frame(composition))
   class(L) <- "ComSim"
@@ -190,12 +203,29 @@ plot.ComSim <- function(run, method = "rich") { # plots "ComSim" objects
 #------------------------------------------------------------------------------
 # Examples
 
-poolA <- GPool(globmeth="allom", Nglobal=30, R0ii=1)
-run1 <- ComSim(poolA, iter=1000, mode="dens", Kmeth="free", SampleMass=TRUE)
+poolA <- HybridGPool()
+run1 <- ComSim(poolA, iter=100, mode="dens", Kmeth="free", SampleMass=F, cij=0.05)
+
+# pre-programmed plotting functionality
 plot(run1, method="raw")
 plot(run1, method="adj")
 plot(run1, "even")
 plot(run1, "rich")
 
-run2 <- ComSim(poolA, iter=1000, mode="dens", Kmeth="saturate", SampleMass=F)
+# comparing Ro and maximum prevalence
+ggplot(run1$data, aes(x=Ro, y=maxprev)) + 
+	geom_point() + geom_smooth() + theme_bw()
+
+# plotting richness against maximum prevalence
+ggplot(run1$data, aes(x=richness, y=maxprev)) + 
+	geom_point() + geom_smooth() + theme_bw()
+
+
+run2 <- ComSim(poolA, iter=100, mode="freq", Kmeth="free", SampleMass=F)
 plot(run2)
+
+ggplot(run2$data, aes(x=Ro, y=maxprev)) + 
+	geom_point() + geom_smooth() + theme_bw()
+
+ggplot(run2$data, aes(x=richness, y=maxprev)) + 
+	geom_point() + geom_smooth() + theme_bw()
