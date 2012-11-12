@@ -6,12 +6,11 @@
 # ComPerm2 repeatedly permutes a global species pool and simulates community
 # disassembly trajectories from each permutation. Intraspecific transmission 
 # (Bii) values are permuted, and shuffled among species to generate a range 
-# of possibilities. When there are 0 inversions, then Bii values match 
-# allometry as in Dobson (2004), when there are a maximal number of inversions, 
-# then Bii values are reversed, so that small species (low weight) have the 
-# highest Bii values. This differs from ComPerm() in that it produces 
+# of possibilities. This differs from ComPerm() in that it produces 
 # disassembly trajectories consisting of sequential extinctions, rather than 
-# Simply producing simulated communities.
+# Simply producing simulated communities. If the global pool R0ii values
+# are drawn from a truncated gamma, then the maximum # of inversions 
+# represents the case where smaller species have the highest values of R0.
 
 ### Inputs ###
 # pool: An object that contains the output of GPool()
