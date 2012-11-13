@@ -93,7 +93,7 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
     }
   }
   
-  if (Kmeth == "saturate") { # curvilinear saturating relationship between
+  if (Kmeth == "saturate.1" | Kmeth == "saturate.2" | Kmeth == "saturate.3") { # curvilinear saturating relationship between
   	for (j in 1:iter) {      # species richness & community density
   		#Assign community members randomly
   		comsize <- ifelse(length(comsizes) != 1, sample(comsizes, size=1), comsizes)
@@ -106,9 +106,16 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
   		comtraits <- globalpool[com, ] # Get species traits for each community member
   		# Adjust K's to make the sum of species K = community K, with abundances 
   		# proportional to their relative abundances
-      #Kcom = 500 / (1 + 50*exp(-0.15*(comsize+10)))
-  		#Kcom = 500 / (1 + 150*exp(-0.15*(comsize+10)))
-      Kcom <- 500 - 3100 / (comsize + 5)
+      if (Kmeth == "saturate.1"){
+        Kcom <- 500 - 3100 / (comsize + 5)
+      }
+      if (Kmeth == "saturate.2"){
+        Kcom = 500 / (1 + 50*exp(-0.15*(comsize+10)))
+      }
+      if (Kmeth == "saturate.3"){
+        Kcom = 500 / (1 + 200*exp(-0.15*(comsize+10)))
+      }
+        
       if ( sum(comtraits[, 5]) < Kcom ){
          comtraits[, 5] <- comtraits[, 5]
       } else {
