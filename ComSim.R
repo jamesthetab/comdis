@@ -59,7 +59,7 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
   
   if (Kmeth == "fixed") {
     for (j in 1:iter) {
-      Kcom = 2 * max(globalpool[, 5])  # Community K = 2*max(K) for global pool
+      Kcom = 3 * max(globalpool[, 5])  # Community K = 2*max(K) for global pool
       #Assign community members randomly
       comsize <- ifelse(length(comsizes) != 1, sample(comsizes, size=1), comsizes)
       if (SampleMass == TRUE){ # sample with probability proportional to abundance
@@ -96,9 +96,16 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
   		comtraits <- globalpool[com, ] # Get species traits for each community member
   		# Adjust K's to make the sum of species K = community K, with abundances 
   		# proportional to their relative abundances
-  		Kcom = 1500 - 10425/(comsize+5) # defines scaling b/t richness & Kcom
-  		Kscale <- Kcom / sum(comtraits[, 5]) # Caclulate K scaling parameter
-  		comtraits[,5 ] <- comtraits[, 5] * Kscale # adjust densities
+      #Kcom = 500 / (1 + 50*exp(-0.15*(comsize+10)))
+  		#Kcom = 500 / (1 + 150*exp(-0.15*(comsize+10)))
+      Kcom <- 500 - 3100 / (comsize + 5)
+      if ( sum(comtraits[, 5]) < Kcom ){
+         comtraits[, 5] <- comtraits[, 5]
+      } else {
+        Kscale <- Kcom / sum(comtraits[, 5]) # Caclulate K scaling parameter
+        comtraits[,5 ] <- comtraits[, 5] * Kscale # adjust densities
+      }
+      
   		pshan <- comtraits[, 5] / sum(comtraits[, 5]) # relative abundances
   		shannondiv[j] <- -(sum((pshan) * log(pshan))) # still returning NA's?
   		richness[j] <- nrow(comtraits)
