@@ -1,7 +1,9 @@
 ################
 ### ComSim() ###
 ################
-# Edited Nov. 11 MJ: Added calculation of maximum prevalence when birth rates =
+# Edited Nov. 15. JM: Added three options to saturate communities using Kmeth=, based on functions
+# for Kcom. "saturate.1" "saturate.2" "saturate.3"
+# Edited Nov. 11. MJ: Added calculation of maximum prevalence when birth rates =
 # death rates (as with HybridGPool), progress bar, cij as function argument.
 
 ### Purpose ###
@@ -13,9 +15,15 @@
 # mode: density dependent "dens" or frequency dependent "freq" transmission
 # iter: how many iterated communities to produce
 # comsizes: All possible values of species richness for simulated communities.
-# Kmeth: Either "free" (total community carrying capacity is free to vary
-#  as species are added), or "fixed" (community K is fixed, and abundances are
+# Kmeth: 
+# 1. "free" (total community carrying capacity is free to vary
+#  as species are added),
+# 2. "fixed" (community K is fixed, and abundances are
 #  adjusted to sum to community K, while relative abundances do not change).
+# 3. saturation methods. Specifically,
+#    "saturate.1", "saturate.2", "saturate.3"
+#  (Total community K is fixed to Kcom following specified functions. Abundances can only be
+#  decreased proportionally to this level, however. They cannot be artificially increased.) 
 # SampleMass: Can be TRUE or FALSE, determines whether sampling of species occurs
 #   with probabilities proportional to abundance, with more abundant species
 #   more likely to be sampled. 
