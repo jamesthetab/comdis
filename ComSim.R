@@ -1,7 +1,9 @@
 ################
 ### ComSim() ###
 ################
-# Edited Nov. 11 MJ: Added calculation of maximum prevalence when birth rates =
+# Edited Nov. 15. JM: Added three options to saturate communities using Kmeth=, based on functions
+# for Kcom. "saturate.1" "saturate.2" "saturate.3"
+# Edited Nov. 11. MJ: Added calculation of maximum prevalence when birth rates =
 # death rates (as with HybridGPool), progress bar, cij as function argument.
 
 ### Purpose ###
@@ -13,9 +15,15 @@
 # mode: density dependent "dens" or frequency dependent "freq" transmission
 # iter: how many iterated communities to produce
 # comsizes: All possible values of species richness for simulated communities.
-# Kmeth: Either "free" (total community carrying capacity is free to vary
-#  as species are added), or "fixed" (community K is fixed, and abundances are
+# Kmeth: 
+# 1. "free" (total community carrying capacity is free to vary
+#  as species are added),
+# 2. "fixed" (community K is fixed, and abundances are
 #  adjusted to sum to community K, while relative abundances do not change).
+# 3. saturation methods. Specifically,
+#    "saturate.1", "saturate.2", "saturate.3"
+#  (Total community K is fixed to Kcom following specified functions. Abundances can only be
+#  decreased proportionally to this level, however. They cannot be artificially increased.) 
 # SampleMass: Can be TRUE or FALSE, determines whether sampling of species occurs
 #   with probabilities proportional to abundance, with more abundant species
 #   more likely to be sampled. 
@@ -66,7 +74,7 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
   
   if (Kmeth == "fixed") {
     for (j in 1:iter) {
-      Kcom = 2 * max(globalpool[, 5])  # Community K = 2*max(K) for global pool
+      Kcom = 3 * max(globalpool[, 5])  # Community K = 2*max(K) for global pool
       #Assign community members randomly
       comsize <- ifelse(length(comsizes) != 1, sample(comsizes, size=1), comsizes)
       if (SampleMass == TRUE){ # sample with probability proportional to abundance
@@ -93,7 +101,7 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
     }
   }
   
-  if (Kmeth == "saturate") { # curvilinear saturating relationship between
+  if (Kmeth == "saturate.1" | Kmeth == "saturate.2" | Kmeth == "saturate.3") { # curvilinear saturating relationship between
   	for (j in 1:iter) {      # species richness & community density
   		#Assign community members randomly
   		comsize <- ifelse(length(comsizes) != 1, sample(comsizes, size=1), comsizes)
@@ -106,9 +114,23 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
   		comtraits <- globalpool[com, ] # Get species traits for each community member
   		# Adjust K's to make the sum of species K = community K, with abundances 
   		# proportional to their relative abundances
-  		Kcom = 1500 - 10425/(comsize+5) # defines scaling b/t richness & Kcom
-  		Kscale <- Kcom / sum(comtraits[, 5]) # Caclulate K scaling parameter
-  		comtraits[,5 ] <- comtraits[, 5] * Kscale # adjust densities
+      if (Kmeth == "saturate.1"){
+        Kcom <- 500 - 3100 / (comsize + 5)
+      }
+      if (Kmeth == "saturate.2"){
+        Kcom = 500 / (1 + 50*exp(-0.15*(comsize+10)))
+      }
+      if (Kmeth == "saturate.3"){
+        Kcom = 500 / (1 + 200*exp(-0.15*(comsize+10)))
+      }
+        
+      if ( sum(comtraits[, 5]) < Kcom ){
+         comtraits[, 5] <- comtraits[, 5]
+      } else {
+        Kscale <- Kcom / sum(comtraits[, 5]) # Caclulate K scaling parameter
+        comtraits[,5 ] <- comtraits[, 5] * Kscale # adjust densities
+      }
+      
   		pshan <- comtraits[, 5] / sum(comtraits[, 5]) # relative abundances
   		shannondiv[j] <- -(sum((pshan) * log(pshan))) # still returning NA's?
   		richness[j] <- nrow(comtraits)
