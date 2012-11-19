@@ -49,9 +49,10 @@ ComPerm2 <- function(pool, kWeightPenalty, mode,
 		perms[Nperms, ] <- pool$Nglobal:1 # last has max(# inversions)
 		perms[2:(Nperms - 1),] <- permute(1:pool$Nglobal) # rest are random perms
 	}
-	Bii.vec <- pool$global.pool[, 8] #allometric scaling Bii vector
-	Bii.perms <- matrix(Bii.vec[perms[1:length(perms[, 1]), ]], 
-											ncol = pool$Nglobal)# permutations of the Bii vector
+	
+	R0.vec <- pool$global.pool[, 10] #allometric scaling R0 vector
+	R0.perms <- matrix(R0.vec[perms[1:length(perms[, 1]), ]], 
+		ncol = pool$Nglobal)# permutations of the R0 vector
 	
 	inversions <- function(init) { # counts inversions in a permutation
 		inv_count <- 0
@@ -65,21 +66,22 @@ ComPerm2 <- function(pool, kWeightPenalty, mode,
 		inv_count
 	}
 	
-	Bii.inversions <- apply(Bii.perms, 1, inversions) # calculate number of inversions
+	R0.inversions <- apply(R0.perms, 1, inversions) # calculate number of inversions
 	
 	# For each permutation except the first, create new global pool
 	global.perms <- pool$global.pool
 	for (i in 2:length(perms[, 1])) { 
 		perm.i <- pool$global.pool
-		perm.i[, 8] <- Bii.perms[i, ]
+		perm.i[, 10] <- R0.perms[i, ] # set R0, calculate Bii below
+		perm.i[, 8] <- (perm.i[, 10] * (perm.i[, 3] + perm.i[, 6] + perm.i[, 7])) / perm.i[, 5] 
 		global.perms <- rbind(global.perms, perm.i) # create all global permutations
 	}
 	
 	global.perms$permutation <- rep(1:length(perms[, 1]), # store permutation ID
-																	each = pool$Nglobal, 
-																	length.out = length(global.perms[, 1]))
-	global.perms$inversions <- rep(Bii.inversions, each = pool$Nglobal, 
-																 length.out = length(global.perms[, 1])) 
+		each = pool$Nglobal, 
+		length.out = length(global.perms[, 1]))
+	global.perms$inversions <- rep(R0.inversions, each = pool$Nglobal, 
+		length.out = length(global.perms[, 1])) 
 	
 	# Simulate communities and Ro for each global pool permutation
 	number.perms <- max(global.perms$permutation) # total number of permutations
@@ -93,7 +95,7 @@ ComPerm2 <- function(pool, kWeightPenalty, mode,
 		dummylist <- list(global.pool = globalpool) # because ComDis extracts the pool from a list
 		runp <- ComDis(dummylist, mode, iter, Kmeth, kWeightPenalty)
 		permutation <- rep(p, nrow(runp$all.data))
-		inversions <- rep(Bii.inversions[p], nrow(runp$all.data))
+		inversions <- rep(R0.inversions[p], nrow(runp$all.data))
 		rund <- cbind(runp$all.data, permutation, inversions)
 		data <- rbind(data, rund)
 		all.comp <- rbind(all.comp, runp$all.composition)
@@ -121,12 +123,12 @@ plot.ComPerm2 <- function(run){
 	require(ggplot2)
 	ggplot(run$data) + theme_bw() +
 		geom_line(aes(richness, Ro, group = interaction(outer.iteration, permutation),
-									color=as.factor(permutation)),
-							alpha=ifelse(max(run$data$outer.iteration) <= 50, 1, (exp(-0.01 * max(run$data$outer.iteration)) + .05))) +
-								facet_wrap(~inversions) +
-								theme(panel.grid.minor=element_blank(), panel.grid.major=element_blank()) +
-								theme(legend.position="none") +
-								ggtitle(chart_title)
+		color=as.factor(permutation)),
+		alpha=ifelse(max(run$data$outer.iteration) <= 50, 1, (exp(-0.01 * max(run$data$outer.iteration)) + .05))) +
+		facet_wrap(~inversions) +
+		theme(panel.grid.minor=element_blank(), panel.grid.major=element_blank()) +
+		theme(legend.position="none") +
+		ggtitle(chart_title)
 }
 
 #------------------------------------------------------------------------------
