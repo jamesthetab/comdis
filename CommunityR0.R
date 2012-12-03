@@ -14,13 +14,14 @@
 # Dominant eigenvalue of the next generation matrix G (following Dobson 2004)
 
 CommunityR0 <- function(comtraits, mode, cij = 0.05){
-  B.1 <- matrix(rep(comtraits[, 8], nrow(comtraits)), nrow = nrow(comtraits), ncol = nrow(comtraits))
-  B.2 <- matrix(rep(comtraits[, 8], each = nrow(comtraits)), nrow = nrow(comtraits), ncol=nrow(comtraits))
-  B.m = cij * (B.1 + B.2) / 2
-  diag(B.m) <- comtraits[, 8] # Specifies intraspecific transmission terms along the diagonal
-  stopifnot (B.m <= 1 & B.m >= 0) # Beta has to be between 0 and 1
-  
   if (mode == "freq"){
+  	# First correct Bii values to account for independence from density
+  	comtraits[, 8] <- comtraits[, 8] * comtraits[, 5] # cancel out density: Bii = (K*(R0*(d + g +V)))/K
+  	B.1 <- matrix(rep(comtraits[, 8], nrow(comtraits)), nrow = nrow(comtraits), ncol = nrow(comtraits))
+  	B.2 <- matrix(rep(comtraits[, 8], each = nrow(comtraits)), nrow = nrow(comtraits), ncol=nrow(comtraits))
+  	B.m = cij * (B.1 + B.2) / 2
+  	diag(B.m) <- comtraits[, 8] # Specifies intraspecific transmission terms along the diagonal
+  	stopifnot (B.m >= 0) # Beta has to be > or == 0
     Gsetup <- matrix(rep(1 / (comtraits[, 6] + comtraits[, 7] + comtraits[, 3]), nrow(comtraits)),
                      nrow=nrow(comtraits), ncol=nrow(comtraits))
     Pdens <- matrix(rep(comtraits[, 5], nrow(comtraits)), 
@@ -35,6 +36,11 @@ CommunityR0 <- function(comtraits, mode, cij = 0.05){
   }
   
   if (mode == "dens"){
+  	B.1 <- matrix(rep(comtraits[, 8], nrow(comtraits)), nrow = nrow(comtraits), ncol = nrow(comtraits))
+  	B.2 <- matrix(rep(comtraits[, 8], each = nrow(comtraits)), nrow = nrow(comtraits), ncol=nrow(comtraits))
+  	B.m = cij * (B.1 + B.2) / 2
+  	diag(B.m) <- comtraits[, 8] # Specifies intraspecific transmission terms along the diagonal
+  	stopifnot (B.m >= 0) # Beta has to be > or == 0
     Gsetup <- matrix(rep(1 / (comtraits[, 6] + comtraits[, 7] + comtraits[, 3]), nrow(comtraits)), 
                      nrow = nrow(comtraits), ncol = nrow(comtraits), byrow=T)
     Pdens <- matrix(rep(comtraits[, 5], nrow(comtraits)), nrow = nrow(comtraits), ncol = nrow(comtraits))
