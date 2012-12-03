@@ -26,6 +26,7 @@ ComDis <- function(globalpool, mode,
 									 kWeightPenalty = 0) {
   richness <- NULL
   Ro <- NULL
+  delta.Ro <- NULL
   shannondiv <- NULL
   density <- NULL
   outer.iteration <- NULL
@@ -62,7 +63,8 @@ ComDis <- function(globalpool, mode,
       inner.iteration[i] = i  
       outer.iteration = rep(j, length(inner.iteration))
       Ro[i] <- CommunityR0(traits, mode)
-      df <- cbind(outer.iteration, inner.iteration, richness, density, shannondiv, Ro)
+      delta.Ro[i] <- ifelse(i == 1, NA, Ro[i-1] - Ro[i])
+      df <- cbind(outer.iteration, inner.iteration, richness, density, shannondiv, Ro, delta.Ro)
     }
     all.data <- rbind(all.data, df)
     all.composition <- rbind(all.composition, out)   
@@ -99,5 +101,5 @@ plot.ComDis <- function(run) { # Plots disassembly trajectories for "ComDis" obj
 #------------------------------------------------------------------------------
 # Example
 poolA <- GPool(Nglobal=6, globmeth="allom")
-dis1<-ComDis(poolA,iter=100,Kmeth="free", mode="freq")
+dis1<-ComDis(poolA,iter=3,Kmeth="free", mode="freq")
 plot(dis1)

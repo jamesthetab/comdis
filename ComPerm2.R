@@ -36,7 +36,7 @@
 
 ComPerm2 <- function(pool, kWeightPenalty, mode,
 										comsizes = 2:pool$Nglobal, iter = 10, Kmeth = "free",
-										Nperms = 1000) {   
+										Nperms = 10) {   
 	stopifnot(Kmeth == "fixed" | Kmeth == "free")
 	write("generating permutations...", "")
 	# Generate all possible Bii permutations from a global pool
@@ -115,24 +115,44 @@ ComPerm2 <- function(pool, kWeightPenalty, mode,
 
 #------------------------------------------------------------------------------
 # Plotting function
-plot.ComPerm2 <- function(run){
+plot.ComPerm2 <- function(run, meth="eff"){
+	stopifnot(meth == "traj" | meth == "eff")
 	require(ggplot2)
 	iter <- max(run$data[, 1])
-	chart_title <- substitute(paste("Disassembly trajectories: ", iter, " per permutation", sep=""),
-														list(iter = iter))
 	require(ggplot2)
-	ggplot(run$data) + theme_bw() +
-		geom_line(aes(richness, Ro, group = interaction(outer.iteration, permutation),
-		color=as.factor(permutation)),
-		alpha=ifelse(max(run$data$outer.iteration) <= 50, 1, (exp(-0.01 * max(run$data$outer.iteration)) + .05))) +
-		facet_wrap(~inversions) +
-		theme(panel.grid.minor=element_blank(), panel.grid.major=element_blank()) +
-		theme(legend.position="none") +
-		ggtitle(chart_title)
+	if (meth=="traj"){
+		chart_title <- substitute(paste("Disassembly trajectories: ", iter, " per permutation", sep=""),
+															list(iter = iter))
+		return(ggplot(run$data) + theme_bw() +
+			geom_line(aes(richness, Ro, group = interaction(outer.iteration, permutation),
+										color=as.factor(permutation)),
+								alpha=ifelse(max(run$data$outer.iteration) <= 50, 1, 
+														 (exp(-0.01 * max(run$data$outer.iteration)) + .05))) +
+														 	facet_wrap(~inversions) +
+														 	theme(panel.grid.minor=element_blank(), panel.grid.major=element_blank()) +
+														 	theme(legend.position="none") +
+														 	ggtitle(chart_title))
+	}
+	
+	if (meth=="eff"){
+		chart_title <- substitute(paste("Effect of species loss on R0: ", iter, " iterations per permutation", sep=""),
+															list(iter = iter))
+		return(ggplot(run$data) + theme_bw() + 
+			geom_jitter(aes(inversions, delta.Ro, color=inner.iteration),
+									alpha=ifelse(max(run$data$outer.iteration) <= 50, 1, 
+															 (exp(-0.01 * max(run$data$outer.iteration)) + .05)),
+									position = position_jitter(height = .0001)) + 
+										scale_colour_gradient(low="blue", high="red") +
+										geom_hline(yintercept=0) +
+										theme(panel.grid.minor=element_blank(), panel.grid.major=element_blank()) +
+										ggtitle(chart_title))
+	}
 }
+
 
 #------------------------------------------------------------------------------
 # Example
 pool1 <- GPool(Nglobal=6, globmeth="allom", a=2)
 test <- ComPerm2(pool1, mode="freq", kWeightPenalty=2, iter=10, Kmeth="free")
-plot(test)
+plot(test, meth="traj")
+plot(test, meth="eff")

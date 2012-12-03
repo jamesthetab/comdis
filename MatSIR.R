@@ -18,7 +18,8 @@
 # times: specification of timesteps for the ode solver
  
 ### Output ### 
-# Numerical solution to the system of differential equations that 
+# Equilibrium and maximal disease prevalance as indicated by
+# numerical solution to the system of differential equations that 
 #   comprise the SIR model, represented in matrix form as:
 # dX <- (B %*% X) + X[vec]*(A %*% X)
 
@@ -135,6 +136,7 @@ MatSIR <- function(comtraits, mode,
 	N.infected <- sum(out[, I.cols])
 	N.total <- sum(out, -1) # all columns except 1st (time)
 	prev <- N.infected / N.total # prevalence at each 
+	end.prev <- prev[length(prev)]
 	max.prev <- max(prev) # maximum prevalence across all species
-	return(max.prev)
+	return(c(max.prev, end.prev))
 }

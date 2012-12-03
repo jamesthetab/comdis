@@ -44,6 +44,7 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
   iteration <- NULL
   J <- NULL
   maxprev <- NULL
+  endprev <- NULL
   composition <- matrix(NA, nrow = iter, ncol = max(comsizes))
   globalpool <- globalpool$global.pool # Extract species data from globalpool list
   bar <- txtProgressBar (min = 0, max = iter, style = 3)
@@ -66,7 +67,9 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
       iteration[j] = j  
       Ro[j] <- CommunityR0(comtraits, mode, cij=cij)
       maxprev[j] <- ifelse(all(comtraits[, 2] != comtraits[, 3]), # only valid when b=d
-      										 NA, MatSIR(comtraits, mode, cij=cij))
+      										 NA, MatSIR(comtraits, mode, cij=cij)[1])
+      endprev[j] <- ifelse(all(comtraits[, 2] != comtraits[, 3]), # only valid when b=d
+      										 NA, MatSIR(comtraits, mode, cij=cij)[2])
       composition[j, 1:length(com)] <- com
       setTxtProgressBar (bar, j)
     }
@@ -95,7 +98,9 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
       iteration[j] = j
       Ro[j] <- CommunityR0(comtraits, mode, cij=cij)
       maxprev[j] <- ifelse(all(comtraits[, 2] != comtraits[, 3]), # only valid when b=d
-      										 NA, MatSIR(comtraits, mode, cij=cij))
+      										 NA, MatSIR(comtraits, mode, cij=cij)[1])
+      endprev[j] <- ifelse(all(comtraits[, 2] != comtraits[, 3]), # only valid when b=d
+      										 NA, MatSIR(comtraits, mode, cij=cij)[2])
       composition[j, 1:length(com)] <- com
       setTxtProgressBar (bar, j)
     }
@@ -138,7 +143,9 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
   		iteration[j] = j
   		Ro[j] <- CommunityR0(comtraits, mode, cij=cij)
   		maxprev[j] <- ifelse(all(comtraits[, 2] != comtraits[, 3]), # only valid when b=d
-  												 NA, MatSIR(comtraits, mode, cij=cij))
+  												 NA, MatSIR(comtraits, mode, cij=cij)[1])
+  		endprev[j] <- ifelse(all(comtraits[, 2] != comtraits[, 3]), # only valid when b=d
+  												 NA, MatSIR(comtraits, mode, cij=cij)[2])
   		composition[j, 1:length(com)] <- com
   		setTxtProgressBar (bar, j)
   	}
@@ -157,8 +164,8 @@ ComSim <- function(globalpool, mode, iter=1000, comsizes=c(2:globalpool$Nglobal)
             comsizes = comsizes, 
             Kmeth = Kmeth,
             SampleMass = SampleMass,
-            data = as.data.frame(cbind(richness, Ro, maxprev, shannondiv, J, density, iteration, 
-                                       dens.adj.rich)), 
+            data = as.data.frame(cbind(richness, Ro, maxprev, endprev, shannondiv, 
+            													 J, density, iteration, dens.adj.rich)), 
             composition = as.data.frame(composition))
   class(L) <- "ComSim"
   L
@@ -226,7 +233,7 @@ plot.ComSim <- function(run, method = "rich") { # plots "ComSim" objects
 # Examples
 
 poolA <- HybridGPool()
-run1 <- ComSim(poolA, iter=100, mode="dens", Kmeth="free", SampleMass=F, cij=0.05)
+run1 <- ComSim(poolA, iter=200, mode="freq", Kmeth="saturate.1", SampleMass=F, cij=0.5)
 
 # pre-programmed plotting functionality
 plot(run1, method="raw")
@@ -242,6 +249,17 @@ ggplot(run1$data, aes(x=Ro, y=maxprev)) +
 ggplot(run1$data, aes(x=richness, y=maxprev)) + 
 	geom_point() + geom_smooth() + theme_bw()
 
+# comparing Ro and final prevalence
+ggplot(run1$data, aes(x=Ro, y=endprev)) + 
+	geom_point() + geom_smooth() + theme_bw()
+
+# comparing richness against end prevalence
+ggplot(run1$data, aes(x=richness, y=endprev)) + 
+	geom_point() + geom_smooth() + theme_bw()
+
+# comparing maxprev with endprev
+ggplot(run1$data, aes(x=maxprev, y=endprev)) + 
+	geom_point() + geom_smooth() + theme_bw()
 
 run2 <- ComSim(poolA, iter=100, mode="freq", Kmeth="free", SampleMass=F)
 plot(run2)
