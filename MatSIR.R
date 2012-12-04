@@ -46,8 +46,12 @@
 MatSIR <- function(comtraits, mode,
 									 cij=0.05,
 									 index.case=sample(1:nrow(comtraits), size=1),
-									 times=seq(0, 10, length=100)){
+									 times=seq(0, 500, length=100)){
 	require(deSolve)
+	if(mode == "freq"){
+		# First correct Bii values to account for independence from density
+		comtraits[, 8] <- comtraits[, 8] * comtraits[, 5] # cancel out density: Bii = (K*(R0*(d + g +V)))/K
+	}
 	if (all(comtraits[, 2] != comtraits[, 3])) {
 		comtraits[, 3] <- comtraits[, 2]
 		print("Death rates set to equal birth rates")
@@ -66,7 +70,7 @@ MatSIR <- function(comtraits, mode,
     	          nrow=nrow(comtraits), ncol=nrow(comtraits))
 	B.m <- cij * (B.1 + B.2) / 2
 	diag(B.m) <- comtraits[, 8] # specify Bii terms along the diagonal
-	stopifnot(B.m <= 1 & B.m >= 0) # Beta has to be between 0 and 1
+	stopifnot(B.m >= 0) # Beta can't be negative
 
 	# Insert Beta values into matrix A
 	A <- matrix(0, nrow = nrow(comtraits) * 3, 
@@ -129,13 +133,13 @@ MatSIR <- function(comtraits, mode,
 	p <- ifelse(mode=="freq", 1/sum(X), 1)
 
 	out <- ode(X, times, SIRmatrix, parms) # run model
-
+	
 	# calculate maximal prevalance
 	all.cols <- 1:ncol(out)
 	I.cols <- all.cols[-which(all.cols %% 3 != 0)] 	#col indices for I classes
-	N.infected <- sum(out[, I.cols])
-	N.total <- sum(out, -1) # all columns except 1st (time)
-	prev <- N.infected / N.total # prevalence at each 
+	N.infected <- apply(out[, I.cols], 1, sum)
+	N.total <- apply(out[, -1], 1, sum) # all columns except 1st (time)
+	prev <- N.infected / N.total # prevalence at each time
 	end.prev <- prev[length(prev)]
 	max.prev <- max(prev) # maximum prevalence across all species
 	return(c(max.prev, end.prev))
