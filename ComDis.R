@@ -23,7 +23,7 @@
 
 ComDis <- function(globalpool, mode,
                    iter = 100, Kmeth = "free", 
-									 kWeightPenalty = 0) {
+									 kWeightPenalty = 0, cij=0.05) {
   richness <- NULL
   Ro <- NULL
   delta.Ro <- NULL
@@ -62,7 +62,7 @@ ComDis <- function(globalpool, mode,
       density[i] <- sum(traits[, 5])
       inner.iteration[i] = i  
       outer.iteration = rep(j, length(inner.iteration))
-      Ro[i] <- CommunityR0(traits, mode)
+      Ro[i] <- CommunityR0(traits, mode, cij)
       delta.Ro[i] <- ifelse(i == 1, NA, Ro[i-1] - Ro[i])
       df <- cbind(outer.iteration, inner.iteration, richness, density, shannondiv, Ro, delta.Ro)
     }
