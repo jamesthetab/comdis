@@ -63,7 +63,7 @@ ComDis <- function(globalpool, mode,
       inner.iteration[i] = i  
       outer.iteration = rep(j, length(inner.iteration))
       Ro[i] <- CommunityR0(traits, mode, cij)
-      delta.Ro[i] <- ifelse(i == 1, NA, Ro[i-1] - Ro[i])
+      delta.Ro[i] <- ifelse(i == 1, NA, Ro[i] - Ro[i-1])
       df <- cbind(outer.iteration, inner.iteration, richness, density, shannondiv, Ro, delta.Ro)
     }
     all.data <- rbind(all.data, df)
