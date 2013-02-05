@@ -41,7 +41,7 @@ ComPerm2 <- function(pool, kWeightPenalty, mode,
 	write("generating permutations...", "")
 	# Generate all possible Bii permutations from a global pool
 	require(gtools)
-	if (pool$Nglobal < 7){
+	if (pool$Nglobal < 8){
 		perms <- permutations(pool$Nglobal, pool$Nglobal) # Bii permutation indices
 	} else {
 		perms <- matrix(NA, nrow=Nperms, ncol=pool$Nglobal) # can control # perms
