@@ -23,7 +23,9 @@
 
 ComDis <- function(globalpool, mode,
                    iter = 100, Kmeth = "free", 
-									 kWeightPenalty = 0, cij=0.05) {
+									 kWeightPenalty = 0, cij=0.05,
+                   exmeth="stochastic") {
+  stopifnot(exmeth=="stochastic" | exmeth=="deterministic")
   richness <- NULL
   Ro <- NULL
   delta.Ro <- NULL
@@ -45,9 +47,15 @@ ComDis <- function(globalpool, mode,
       if (i == 1) { # for the first iteration, we start with out starting community
         out[i, 1:(length(com))] <- com
       } else { # otherwise, delete one species 
-        out[i, 1:(length(com) - (i - 1))] <- sample(out[(i - 1), which(out[(i - 1), ] != "NA")], 
+        if (exmeth == "stochastic"){
+          out[i, 1:(length(com) - (i - 1))] <- sample(out[(i - 1), which(out[(i - 1), ] != "NA")], 
                                                     size = (length(com) - (i - 1)), replace = F,
         																						prob = traits$weight ^ - kWeightPenalty)
+        } else { # large species always extirpated first
+          rm.spec <- which.max(out[i-1, ]) # index to remove
+          new.com <- out[i-1, -rm.spec]
+          out[i, 1:(length(com) - (i - 1))] <- new.com[!is.na(new.com)]
+        }
       }
       ids <- out[i, which(out[i, ] != "NA")] # Store species ID's
       traits <- globalpool[ids, ] # extract species traits
@@ -101,5 +109,7 @@ plot.ComDis <- function(run) { # Plots disassembly trajectories for "ComDis" obj
 #------------------------------------------------------------------------------
 # Example
 poolA <- GPool(Nglobal=6, globmeth="allom")
-dis1<-ComDis(poolA,iter=3,Kmeth="free", mode="freq")
+dis1<-ComDis(poolA,iter=100,Kmeth="free", mode="freq", exmeth="stochastic")
 plot(dis1)
+dis2 <- ComDis(poolA, iter=100, Kmeth="free", mode="freq", exmeth="deterministic")
+plot(dis2)
