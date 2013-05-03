@@ -1,36 +1,9 @@
-alloucheIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30, 
-                    sig=5, timesteps=1000, pM=.1, pR=1, R=2, I=0.1,
+fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30, 
+                    sig=5, timesteps=500, pM=.1, pR=1, R=2, I=0.1,
                         P=100, pEmin=-30, pEmax=30, pERmin=-30, pERmax=30,
-                        sig.p = 5, gamma = .3, 
+                        sig.p = 5, gamma = .3, pI=.01,
                         network.pow=1, network.za=1){
   require(igraph)
-  ### PARAMETERS FOR FUNCTION DEVELOPMENT ###
-  A=10
-  N=5 
-  ERmin=-30 
-  ERmax=30 
-  Emin=-30 
-  Emax=30 
-  sig=5 
-  timesteps=100 
-  pM=.1 
-  pR=1 
-  R=2 
-  I=0.1
-  P=2
-  pEmin=-30 
-  pEmax=30 
-  pERmin=-30 
-  pERmax=30
-  sig.p = 20 
-  gamma = .3
-  exp.contact <- 2
-  network.pow <- 1
-  network.za <- 1
-  
-  
-  
-  
   E <- runif(A, Emin, Emax) # habitat patch environment type
   pE <- runif(N, pEmin, pEmax) # within-host environmental conditions
   mu.i <- runif(N, ERmin, ERmax) # optimum environment for hosts
@@ -105,9 +78,141 @@ alloucheIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
   pb <- txtProgressBar(min = 0, max = timesteps, style = 3)
   
   for (t in 2:timesteps){
-    t <- 2
     state[t,,] <- state[t-1,,]
     pstate[t,,] <- pstate[t-1,,]
+    
+    
+    # PARASITES DO THEIR THING # 
+    # PARASITE TRANSMISSION WITHIN COMMUNITY #
+    # for simplicity, assume contact rates are poisson distributed and density independent
+    # determine number of contacts
+    # for each host, determine how many other hosts were contacted
+    #contacts <- array(rpois(A*N, c(state[t,,])*exp.contact), dim=c(A, N))
+    # randomly determine which individuals are contacted (homogeneous mixing)
+    occupancy <- apply(state[t,,], 1, max)
+    n.ind <- sum(occupancy)
+    
+    # build scale-free undirected contact network with Barabasi-Albert algorithm
+    g <- barabasi.game(n.ind, directed=F, power=network.pow, zero.appeal=network.za)
+    # turn into matrix
+    m <- as.matrix(get.adjacency(g))
+    # reorder to account for bias towards connected early nodes
+    new.order <- sample(dim(m)[1], replace=F)
+    m <- m[new.order,new.order]
+    # plot(graph.adjacency(m)) # visualize the contact network
+    
+    # Now, identify whether susceptibles have contacted infectious
+    # pstate is timestep X site X parasite
+    Sindivs <- ifelse(class(pstate[t, which(occupancy==1),]) == "array", 
+                      which(apply(pstate[t, which(occupancy==1),], 1,sum) < 1),
+                      ifelse(sum(pstate[t, which(occupancy==1),] == 0), 1, 0))
+    Iindivs <- ifelse(class(pstate[t, which(occupancy==1),]) == "array", 
+                      which(apply(pstate[t, which(occupancy==1),], 1,sum) > 0),
+                      ifelse(sum(pstate[t, which(occupancy==1),]) == 0, 0, 1))
+    #Iindivs <- which(apply(pstate[t, which(occupancy==1),], 1, sum) > 0)
+    if (sum(Iindivs) > 0){ # if there are infectious individuals
+      # go through transmission cycle
+      Ssites <- which(occupancy == 1)[Sindivs]
+      Isites <- which(occupancy == 1)[Iindivs]
+      # are there any S rows in the m matrix that contact I columns?
+      establishing.parasites <- array(0, dim=c(A, P))
+      if(any(m[Sindivs,Iindivs] == 1)){
+        # test whether parasite establishes for each S-I contact
+        # for each susceptible host
+        for (s in Sindivs){
+          # what is the relevant matrix? m[s, Iindivs]
+          contacts <- sum(m[s, Iindivs]) # how many contacts with infectious individuals?
+          if(contacts == 0){
+            next
+          }else{
+            # which site is that host in?
+            Ssite <- which(occupancy == 1)[s]
+            # which host species is susceptible
+            Ssp <- which(state[t, Ssite,] == 1)
+            # How many contacts occur with individuals infectious with different parasite spp?
+            # which individuals in the m matrix are encountered?
+            minds <- which(m[s, ] == 1)
+            # which of these are infectious?
+            i.minds <- minds[minds %in% Iindivs]
+            # what sites do they occur in?
+            Isites <- which(occupancy == 1)[i.minds]
+            # what host species are they?
+            Isp <- which(state[t, Isites, ] == 1)
+            # what parasites do they have?
+            Ipars <- ifelse(class(pstate[t, Isites,]) == "matrix", 
+                            apply(pstate[t, Isites,], 2, sum),
+                            pstate[t, Isites,])
+            # above ifelse statement to account for only one I contact
+            # Ipars is a vector with the sum of parsite contacts for each parasite species
+            ppestab <- pPcol[Ssp,]
+            # what is the probability of parasite establishment in that host species
+            # adjust this probability to account for interspecific transmission?
+            # bernoulli trial to see whether establishment possible
+            ptrial <- rbinom(sum(Ipars), Ipars, ppestab)
+            # store potential establishment data in a host X parasite matrix, where the number
+            # indicates the number of potential establishment events
+            establishing.parasites[Ssite, ] <- ptrial
+          }
+        }
+        # if multiple parasites can establish in one host individual, resolve conflict
+        col.attempts <- apply(establishing.parasites, 1, sum)
+        if (any(col.attempts > 1)){ # if individuals are trying to simultaneously colonize
+          conflicts <- which(col.attempts > 1) # which empty sites have conflicts
+          for (k in conflicts){ # for each conflict
+            # how many of individuals of each species are attempting to simultaneously colonize?
+            attempting <- rep(1:P, times = establishing.parasites[k,])
+            # successful individual randomly selected from those attempting
+            successful <- sample(attempting, size=1)
+            new.row <- rep(0, length.out=P)
+            new.row[successful] <- 1
+            establishing.parasites[k,] <- new.row
+          }
+        }
+        # add establishing parasites
+        pstate[t,,] <- pstate[t,,] + establishing.parasites
+      } 
+    }
+    
+    # otherwise, move on to parasite colonization from regional pool
+    
+    # PARASITE INVASION FROM REGIONAL POOL #
+    poccupancy <- apply(pstate[t,,], 1, max)
+    occupancy <- apply(state[t,,], 1, max)
+    open.sites <- which(occupancy - poccupancy == 1)
+    if(sum(poccupancy) < sum(occupancy)){ # if not every host is infected
+      empty.hosts <- which(poccupancy == 0 & occupancy == 1)
+      # which parasite species immigrate to each site?
+      immigration <- array(rbinom(length(empty.hosts)*P,
+                                  1, pI), dim=c(length(empty.hosts), P))
+      # which parasite immigrants establish?
+      # first determine which species occur in the empty sites
+      Ssp <- apply(state[t, open.sites,], 1, which.max)
+      Pest <- immigration * pPcol[Ssp, ] # P(establishment) = I(attempting to colonize)*Pr(estab)
+      establishment <- array(rbinom(length(Pest), 1, c(Pest)),
+                             dim=c(length(empty.hosts), P))
+      # resolve conflicts arising from simultaneous colonization
+      col.attempts <- apply(establishment, 1, sum)
+      if (any(col.attempts > 1)){ # if individuals are trying to simultaneously colonize
+        conflicts <- which(col.attempts > 1) # which empty sites have conflicts
+        for (k in conflicts){ # for each conflict
+          # how many of individuals of each species are attempting to simultaneously colonize?
+          attempting <- rep(1:P, times = establishment[k,])
+          # successful individual randomly selected from those attempting
+          successful <- sample(attempting, size=1)
+          new.row <- rep(0, length.out=P)
+          new.row[successful] <- 1
+          establishment[k,] <- new.row
+        }
+      }
+      # add establishing immigrants
+      pstate[t, empty.hosts, ] <- pstate[t, empty.hosts,] + establishment
+    }
+    
+    # HOST RECOVERY / PARASITE DEATH #
+    recovery <- array(rbinom(A*N, 1, c(state[t,,])*gamma), dim=c(A, N))
+    # for the hosts that recover, remove parasites
+    rec.sites <- apply(recovery, 1, sum) # recovered sites
+    pstate[t, rec.sites,] <- 0 # host recovers, is again susceptible
     
     ## HOST DEATHS ##
     deaths <- array(rbinom(A*N, 1, c(state[t,,])*pM), dim=c(A, N))
@@ -192,75 +297,17 @@ alloucheIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
       # add establishing immigrants
       state[t, empty.sites, ] <- state[t, empty.sites,] + establishment
     }
-    
-    # PARASITES DO THEIR THING # 
-    # HOST RECOVERY / PARASITE DEATH #
-    recovery <- array(rbinom(A*N, 1, c(state[t,,])*gamma), dim=c(A, N))
-    # for the hosts that recover, remove parasites
-    rec.sites <- apply(recovery, 1, sum) # recovered sites
-    pstate[t, rec.sites,] <- 0 # host recovers, is again susceptible
-    
-    # PARASITE TRANSMISSION WITHIN COMMUNITY #
-    # for simplicity, assume contact rates are poisson distributed and density independent
-    # determine number of contacts
-    # for each host, determine how many other hosts were contacted
-    #contacts <- array(rpois(A*N, c(state[t,,])*exp.contact), dim=c(A, N))
-    # randomly determine which individuals are contacted (homogeneous mixing)
-    occupancy <- apply(state[t,,], 1, max)
-    n.ind <- sum(occupancy)
-    # build scale-free undirected contact network with Barabasi-Albert algorithm
-    g <- barabasi.game(n.ind, directed=F, power=network.pow, zero.appeal=network.za)
-    # turn into matrix
-    m <- as.matrix(get.adjacency(g))
-    # reorder to account for bias towards connected early nodes
-    new.order <- sample(dim(m)[1], replace=F)
-    m <- m[new.order,new.order]
-    plot(graph.adjacency(m))
-    
-    #contact.matrix <- array(0, dim=rep(A, 2))
-    #off.d <- row(contact.matrix) - col(contact.matrix)
-    #contact.matrix[off.d < 1] <- NA # make it a lower triangular matrix
-    
-    # for each host
-    # randomly sample from other occupied sites to determine who is contacted
-    # if the number of contacts > number of occupied sites, then all sites are contacted
-    # fill in a (site X site) interaction matrix where 0 indicates no interaction, 1 indicates a contact
-    # determine whether transmission occurred, given contact
-    # for each contact, 
-    for (i in 1:n.ind){
-      site <- which(occupancy == 1)[i] # site focal host occupies
-      pot.cont <- which(occupancy == 1)[-i] # potential sites to be contacted
-      pot.n <- sum(contacts[site,]) # potential number of contacts
-      # if the number of contacts > number of occupied sites, then all sites are contacted
-      if(pot.n < length(pot.cont)){
-        # choose which sites are contacted
-        contacted <- sample(pot.cont, size=pot.n, replace=F)
-        contact.matrix[site, contacted] <- 1
-      } else {
-        # every site is contacted
-        contacted <- pot.cont
-        contact.matrix[site, contacted] <- 1
-      }
-    }
-    # Consider simulating contact matrix using an algorithm
-    
-    # break up into S-S, S-I, and I-I contacts
-    # S-S and I-I contacts do not affect transmission
-    # test whether parasite establishes for each S-I contact
-    # if multiple parasites can establish in one host individual, resolve conflict
-    
-    
-    # PARASITE INVASION FROM REGIONAL POOL #
-    #par.state <- parasiteIBM(state[t,,])
-    
-    
+
     
     host.richness[t] <- sum(apply(state[t,,], 2, max))
     host.pr.occ[t] <- length(which(state[t,,] == 1)) / A
+    parasite.richness[t] <- sum(apply(pstate[t,,], 2, max))
     setTxtProgressBar(pb, t)
   }
   # check to confirm there are not multiple indivduals in any sites
   stopifnot(all(apply(state[t,,], 1, sum) < 2))
-  return(list(host.richness=host.richness, host.pr.occ = host.pr.occ, state=state, 
-              niche.d=niche.d, pniche.d=pniche.d))
+  stopifnot(all(pstate[t,,] < 2))
+  return(list(host.richness=host.richness, host.pr.occ = host.pr.occ, 
+              state=state, pstate=pstate,
+              niche.d=niche.d, pniche.d=pniche.d, parasite.richness=parasite.richness))
 }
