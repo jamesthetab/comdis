@@ -348,8 +348,7 @@ mtext("None", side=1, line=0, outer=T, at=c(.25, .75))
 
 
 ### Plotting the distributions side by side
-source("vioplotR.R")
-source("vioplotL.R")
+source("~/vioplot2.R")
 ### Plotting deterministic case over the stochastic case
 plot.v3 <- function(scenario, ylab=NULL){
   scenario <<- scenario
@@ -367,12 +366,14 @@ plot.v3 <- function(scenario, ylab=NULL){
   rect(-10, 0, 100, -4000000, border=red, col=red)
   determ.x <<- 1:length(unique(determ.d$inversions))
   for (i in unique(determ.d$inversions)){
-    vioplotR(subset(stoch.d, scen == scenario & inversions == i)$percent.dR0,
+    vioplot2(subset(stoch.d, scen == scenario & inversions == i)$percent.dR0,
             col="yellow", colMed="lightgrey", ylim=ylims,
-            at=determ.x[which(unique(determ.d$inversions) == i)], add=T)
-    vioplotL(subset(determ.d, scen == scenario & inversions == i)$percent.dR0,
-            col="white", colMed="lightgrey", ylim=ylims,
-            at=determ.x[which(unique(determ.d$inversions) == i)], add=T)
+            at=determ.x[which(unique(determ.d$inversions) == i)], 
+            side="right", add=T)
+    vioplot2(subset(determ.d, scen == scenario & inversions == i)$percent.dR0,
+            col="white", colMed="lightgrey",
+            at=determ.x[which(unique(determ.d$inversions) == i)], 
+            side="left", add=T)
   }
 }
 
