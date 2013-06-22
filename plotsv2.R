@@ -133,9 +133,6 @@ rand.d <- rand.d[-1, ]
 rand.d$scen <- scen
 rand.d$percent.dR0 <- rand.d$percent.dR0*100
 rand.d$percent.dR0 <- rand.d$percent.dR0 - 100
-
-
-
 stoch.d <- data.frame(stoch.d)
 stoch.d <- stoch.d[-1, ]
 stoch.d$scen <- scen
@@ -153,6 +150,7 @@ determ.d$lpR0 <- log((determ.d$percent.dR0 + 100))
 #####################################################
 ### Plot results side by side for easy comparison ###
 #####################################################
+# Deterministic vs. stochastic
 ylims <- c(min(stoch.d$delta.Ro), max(stoch.d$delta.Ro))
 plot.v3 <- function(scenario, ylab=NULL){
   scenario <<- scenario
@@ -181,7 +179,6 @@ plot.v3 <- function(scenario, ylab=NULL){
   }
 }
 
-# Adjusting for spacing
 in.marg <- .05
 nf <- layout(matrix(c(1, 2, 3, 4), 2, 2, byrow=T))
 layout.show(nf)
@@ -190,21 +187,15 @@ par(oma=c(marg.size-2, marg.size, 2, 1))
 par(mai=c(in.marg, in.marg, in.marg, in.marg))
 plot.v3("freq/free")
 axis(side=2)
-#mtext(expression(paste("Extirpation-induced %", Delta, R[0])), side=2, line=1.7, adj=0.0, cex=.9, at=c(.6), outer=TRUE)
 par(mai=c(in.marg, in.marg, in.marg, in.marg))
-
 plot.v3("dens/free")
 legend(x=4, y=2, legend=c("Deterministic extirpations", "Stochastic extirpations"),
        fill=c("white", "yellow"))
 par(mai=c(in.marg, in.marg, in.marg, in.marg))
 plot.v3("freq/fixed")
 axis(side=2)
-#mtext(expression(paste("Extirpation-induced %", Delta, R[0])), side=2, line=1.7, adj=0.0, cex=.9, at=c(.1), outer=TRUE)
 par(mai=c(in.marg, in.marg, in.marg, in.marg))
 plot.v3("dens/fixed")
-
-# Adding miscellaneous labels
-# Left side
 mtext("Variable density", side=2, line=4, cex=1.1, at=.75, outer=T)
 mtext("Fixed density", side=2, line=4, cex=1.1, at=.25, outer=T)
 mtext("Frequency-dependent transmission", side=3, line=0, outer=T, at=.25, cex=1.1)
@@ -217,9 +208,9 @@ mtext("None", side=1, line=0, outer=T, at=c(.25, .75))
 mtext(expression(paste("Extirpation-induced %", Delta, R[0])), side=2, line=1.7, adj=0.0, cex=.9, at=c(.35), outer=TRUE)
 
 
-########################
+
+
 ### With percentages ###
-########################
 ylarge <- max(c(stoch.d$percent.dR0, determ.d$percent.dR0))
 ysmall <- min(c(stoch.d$percent.dR0, determ.d$percent.dR0))
 ylims <- c(ysmall, ylarge)
@@ -254,8 +245,6 @@ plot.v3 <- function(scenario, ylab=NULL){
   }
 }
 
-
-# Adjusting for spacing
 in.marg <- .05
 nf <- layout(matrix(c(1, 2, 3, 4), 2, 2, byrow=T))
 layout.show(nf)
@@ -264,7 +253,6 @@ par(oma=c(marg.size-2, marg.size, 2, 1))
 par(mai=c(in.marg, in.marg, in.marg, in.marg))
 plot.v3("freq/free")
 axis(side=2)
-#mtext(expression(paste("Extirpation-induced %", Delta, R[0])), side=2, line=1.7, adj=0.0, cex=.9, at=c(.6), outer=TRUE)
 par(mai=c(in.marg, in.marg, in.marg, in.marg))
 plot.v3("dens/free")
 legend(x=4, y=300, legend=c("Deterministic extirpations", "Stochastic extirpations"),
@@ -272,12 +260,72 @@ legend(x=4, y=300, legend=c("Deterministic extirpations", "Stochastic extirpatio
 par(mai=c(in.marg, in.marg, in.marg, in.marg))
 plot.v3("freq/fixed")
 axis(side=2)
-#mtext(expression(paste("Extirpation-induced %", Delta, R[0])), side=2, line=1.7, adj=0.0, cex=.9, at=c(.1), outer=TRUE)
 par(mai=c(in.marg, in.marg, in.marg, in.marg))
 plot.v3("dens/fixed")
+mtext("Variable density", side=2, line=4, cex=1.1, at=.75, outer=T)
+mtext("Fixed density", side=2, line=4, cex=1.1, at=.25, outer=T)
+mtext("Frequency-dependent transmission", side=3, line=0, outer=T, at=.25, cex=1.1)
+mtext("Density-dependent transmission", side=3, line=0, outer=T, at=.75, cex=1.1)
+mtext("Relationship between host competence and body size",
+      side=1, line=2.5, outer=T, at=.5, cex=1.4)
+mtext("Negative", side=1, line=0, outer=T, at=c(.05, .55))
+mtext("Positive", side=1, line=0, outer=T, at=c(.45, .95))
+mtext("None", side=1, line=0, outer=T, at=c(.25, .75))
+mtext(expression(paste("Extirpation-induced %", Delta, R[0])), side=2, line=1.7, adj=0.0, cex=.9, at=c(.35), outer=TRUE)
 
-# Adding miscellaneous labels
-# Left side
+
+
+
+
+
+#--------------------------#
+# Deterministic vs. random #
+#--------------------------#
+ylims <- c(min(rand.d$delta.Ro), max(rand.d$delta.Ro))
+plot.v3 <- function(scenario, ylab=NULL){
+  scenario <<- scenario
+  require(vioplot)
+  red <- "firebrick1"
+  blue <-"lightskyblue"
+  botleft <- c(-10, -4)
+  topright <- c(100, 40000)
+  xmax <- length(unique(determ.d$inversions)) + .5
+  xlimits <- seq(.5, xmax)
+  plot(x=xlimits, y=rep(ylims, length.out=length(xlimits)), 
+       type="n", ann=FALSE, axes=F, ylab=ylab)
+  lim <- par("usr")
+  rect(botleft[1], botleft[2], topright[1], topright[2], border=blue, col=blue)
+  rect(-10, 0, 100, -4000000, border=red, col=red)
+  determ.x <<- 1:length(unique(determ.d$inversions))
+  for (i in unique(determ.d$inversions)){
+    vioplot2(subset(rand.d, scen == scenario & inversions == i)$delta.Ro,
+             col="yellow", colMed="lightgrey", ylim=ylims,
+             at=determ.x[which(unique(determ.d$inversions) == i)], 
+             side="right", add=T)
+    vioplot2(subset(determ.d, scen == scenario & inversions == i)$delta.Ro,
+             col="white", colMed="lightgrey",
+             at=determ.x[which(unique(determ.d$inversions) == i)], 
+             side="left", add=T)
+  }
+}
+
+in.marg <- .05
+nf <- layout(matrix(c(1, 2, 3, 4), 2, 2, byrow=T))
+layout.show(nf)
+marg.size <- 6
+par(oma=c(marg.size-2, marg.size, 2, 1))
+par(mai=c(in.marg, in.marg, in.marg, in.marg))
+plot.v3("freq/free")
+axis(side=2)
+par(mai=c(in.marg, in.marg, in.marg, in.marg))
+plot.v3("dens/free")
+legend(x=5, y=5, legend=c("Deterministic extirpations", "Random extirpations"),
+       fill=c("white", "yellow"))
+par(mai=c(in.marg, in.marg, in.marg, in.marg))
+plot.v3("freq/fixed")
+axis(side=2)
+par(mai=c(in.marg, in.marg, in.marg, in.marg))
+plot.v3("dens/fixed")
 mtext("Variable density", side=2, line=4, cex=1.1, at=.75, outer=T)
 mtext("Fixed density", side=2, line=4, cex=1.1, at=.25, outer=T)
 mtext("Frequency-dependent transmission", side=3, line=0, outer=T, at=.25, cex=1.1)
