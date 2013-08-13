@@ -43,8 +43,8 @@
 # and species traits (global.pool)
 
 GPool <- function(Nglobal=20, Bmeth="allomr", Bii=0.3, globmeth="allom",
-                  a=1.15, m=1.5, R0ii="TG", min.weight=1, kRecovery=10){
-	
+                  a=1.15, m=1.5, R0ii="TG", min.weight=1, kRecovery=10, seed=runif(1, 1, 10000),
+                  k = 0.5, w = 5) {
 	stopifnot(R0ii == "TG" | (class(R0ii) == "numeric" & length(R0ii) == 1))
   species <- mat.or.vec(Nglobal, 10) # initialize matrix
   species[,1] <- c(1:Nglobal) # assign species ID's
@@ -52,8 +52,9 @@ GPool <- function(Nglobal=20, Bmeth="allomr", Bii=0.3, globmeth="allom",
   
   if (R0ii == "TG"){
   	library(distr)
-  	k <- 0.3; w <- 3 #Shape and scale parameters of the truncated gamma. Can alter if necessary.
-  	TG <- Truncate(Gammad(scale=k, shape=w), lower=0, upper=2)
+    #Shape and scale parameters of the truncated gamma. Can alter if necessary.
+  	TG <- Truncate(Gammad(scale=k, shape=w), lower=0, upper=10)
+    set.seed(seed)
   	R0ii <- r(TG)(Nglobal)
   	R0ii <- R0ii[rev(order(R0ii))]
   }
@@ -125,5 +126,13 @@ GPool <- function(Nglobal=20, Bmeth="allomr", Bii=0.3, globmeth="allom",
 }
 
 # Examples
-pool.tg <- GPool(globmeth="allom", R0ii="TG")
+pool.tg <- GPool(globmeth="allom", R0ii="TG", seed=2, k=.1, w=10)
 pool.fixed <- GPool(globmeth="allom", R0ii=1)
+
+pairs(pool.tg$global.pool)
+
+ggplot(pool.tg$global.pool) + geom_line(aes(x=weight, y=K)) + 
+  theme_bw() + xlab("Weight") + ylab("Carrying capacity")
+
+ggplot(pool.tg$global.pool, aes(x=weight, y=R0ii)) + geom_point() + stat_smooth(color="darkgreen") +
+  theme_bw() + xlab("Weight") + ylab(expression(paste("Host competence (", R[0],")", sep="")))
