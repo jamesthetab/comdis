@@ -73,7 +73,8 @@ ComPerm2 <- function(pool, kWeightPenalty, mode,
 	for (i in 2:length(perms[, 1])) { 
 		perm.i <- pool$global.pool
 		perm.i[, 10] <- R0.perms[i, ] # set R0, calculate Bii below
-		perm.i[, 8] <- (perm.i[, 10] * (perm.i[, 3] + perm.i[, 6] + perm.i[, 7])) / perm.i[, 5] 
+		perm.i[, 8] <- (perm.i[, 10] * (perm.i[, 3] + perm.i[, 6] + perm.i[, 7])) / 
+      ifelse(mode=="dens", perm.i[, 5], 1) # only divide by K if DD transmission 
 		global.perms <- rbind(global.perms, perm.i) # create all global permutations
 	}
 	
