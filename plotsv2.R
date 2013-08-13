@@ -468,6 +468,7 @@ for (i in 1:reps){
 
 
 ### S1 ------------------------------------------------------------------------
+pool <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=.5, w=1.5)
 test <- ComPerm2(pool, mode="dens", exmeth="deterministic",
                  iter=1, Kmeth="free", cij=.1)
 test$pool$inversions <- test$pool$inversions*-1
@@ -589,11 +590,121 @@ mtext("Figure S4: Effects of extirpation on disease risk with deterministic and 
 #################
 ### Figure S4 ###
 #################
+# re-run with more iterations
+# Assessing sensitivity to a
+# dens/fixed
+intervals_a <- 20
+a <- seq(1, 5, length.out=intervals_a)
+ninversions <- 11
+y <- rep(a, each=ninversions) # values of a
+x <- rep(0:10, length.out=length(y)) # inversions
+z <- matrix(NA, nrow=length(a), ncol=ninversions)
+iters <- 1000
+aalld <- NULL
+seeds <- runif(iters, 1, 1000000)
+
+for (j in 1:iters){
+  print(paste("Beginning overall iteration ", j))
+# dens/fixed
+for (i in 1:length(a)){
+  pool1 <- GPool(globmeth="allom", Nglobal=5, a=a[i], R0ii="TG", k=.5, w=1.5, seed=seeds[j])
+  d <- ComPerm2(pool1, mode="dens", iter=1, Kmeth="fixed", cij=.1, exmeth="deterministic")
+  subd <- subset(d$data, !is.na(delta.Ro))
+  for (inv in unique(subd$inversions)){
+    rows <- which(subd$inversions == inv)
+    mean.eff <- mean(subd$delta.Ro[rows], na.rm=T)
+    z[i, inv + 1] <- mean.eff
+  }
+  print(paste("combo 1:","a val:", i, 
+              "of", intervals_a, "iteration", j, "of", iters, sep=" "))
+}
+
+z2 <- c(t(z))
+adf1 <- data.frame(x, y, z2, group="dens/fixed", iter=j)
+
+# freq/free
+z <- matrix(NA, nrow=length(a), ncol=ninversions)
+for (i in 1:length(a)){
+  pool1 <- GPool(globmeth="allom", Nglobal=5, a=a[i], R0ii="TG", k=.5, w=1.5, seed=seeds[j])
+  d <- ComPerm2(pool1, mode="freq", iter=1, Kmeth="free", cij=.1, exmeth="deterministic")
+  subd <- subset(d$data, !is.na(delta.Ro))
+  for (inv in unique(subd$inversions)){
+    rows <- which(subd$inversions == inv)
+    mean.eff <- mean(subd$delta.Ro[rows], na.rm=T)
+    z[i, inv + 1] <- mean.eff
+  }
+  print(paste("combo 2:","a val:", i, 
+              "of", intervals_a, "iteration", j, "of", iters, sep=" "))
+}
+
+z2 <- c(t(z))
+adf2 <- data.frame(x, y, z2, group="freq/free", iter=j)
+
+# dens/free
+z <- matrix(NA, nrow=length(a), ncol=ninversions)
+for (i in 1:length(a)){
+  pool1 <- GPool(globmeth="allom", Nglobal=5, a=a[i], R0ii="TG", k=.5, w=1.5, seed=seeds[j])
+  d <- ComPerm2(pool1, mode="dens", iter=1, Kmeth="free", cij=.1, exmeth="deterministic")
+  subd <- subset(d$data, !is.na(delta.Ro))
+  for (inv in unique(subd$inversions)){
+    rows <- which(subd$inversions == inv)
+    mean.eff <- mean(subd$delta.Ro[rows], na.rm=T)
+    z[i, inv + 1] <- mean.eff
+  }
+  print(paste("combo 3:","a val:", i, 
+              "of", intervals_a, "iteration", j, "of", iters, sep=" "))
+}
+
+z2 <- c(t(z))
+adf3 <- data.frame(x, y, z2, group="dens/free", iter=j)
+
+# freq/fixed
+z <- matrix(NA, nrow=length(a), ncol=ninversions)
+for (i in 1:length(a)){
+  pool1 <- GPool(globmeth="allom", Nglobal=5, a=a[i], R0ii="TG", k=.5, w=1.5, seed=seeds[j])
+  d <- ComPerm2(pool1, mode="freq", iter=1, Kmeth="fixed", cij=.1, exmeth="deterministic")
+  subd <- subset(d$data, !is.na(delta.Ro))
+  for (inv in unique(subd$inversions)){
+    rows <- which(subd$inversions == inv)
+    mean.eff <- mean(subd$delta.Ro[rows], na.rm=T)
+    z[i, inv + 1] <- mean.eff
+  }
+  print(paste("combo 4:","a val:", i, 
+              "of", intervals_a, "iteration", j, "of", iters, sep=" "))
+}
+
+z2 <- c(t(z))
+adf4 <- data.frame(x, y, z2, group="freq/fixed", iter=j)
+aalld <- rbind(aalld, adf1, adf2, adf3, adf4)
+}
+
+# Generate averages for Z across all iterations, then make plot
+require(plyr)
+testt <- ddply(aalld, c("x", "y", "group"), summarise, 
+               mean_z=mean(z2, na.rm=T))
 
 
+# all data
+## Combining all contour data and adding a factor identifying transmission & extinction dynamics
+
+# aalld$group <- rep(c("dens/fixed", "freq/free", "dens/free", "freq/fixed"), each=nrow(adf1))
+require(ggplot2)
+ap5 <- ggplot(testt, aes(x=x, y=y, z=mean_z)) +
+  theme(panel.background = element_rect(color="grey", fill="white"),
+        panel.grid.minor=element_blank(), panel.grid.major=element_blank())+
+  facet_wrap(~group) +
+  geom_tile(aes(x=x,y=y,fill=mean_z)) +
+  stat_contour(aes(colour = ..level..)) + ylab("a scale parameter") +
+  scale_colour_gradient(low="black", high="black") + scale_x_reverse() + 
+  xlab("Relationship between competence and extirpation risk") +
+  scale_fill_gradient2(expression(paste(Delta, R[0])), 
+                       low="firebrick1", high="blue")
+require(directlabels)
+direct.label(ap5,list("top.points",cex=.7))
 
 
-
+require(foreach)
+getDoParWorkers()
 
 
 
