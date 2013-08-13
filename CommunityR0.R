@@ -16,7 +16,8 @@
 CommunityR0 <- function(comtraits, mode, cij = 0.05){
   if (mode == "freq"){
   	# First correct Bii values to account for independence from density
-  	comtraits[, 8] <- comtraits[, 8] * comtraits[, 5] # cancel out density: Bii = (K*(R0*(d + g +V)))/K
+  	# comtraits[, 8] <- comtraits[, 8] * comtraits[, 5] # cancel out density: Bii = (K*(R0*(d + g +V)))/K
+    # above line commented out because adjustment is now made when first assigning traits
   	B.1 <- matrix(rep(comtraits[, 8], nrow(comtraits)), nrow = nrow(comtraits), ncol = nrow(comtraits))
   	B.2 <- matrix(rep(comtraits[, 8], each = nrow(comtraits)), nrow = nrow(comtraits), ncol=nrow(comtraits))
   	B.m = cij * (B.1 + B.2) / 2
@@ -31,7 +32,6 @@ CommunityR0 <- function(comtraits, mode, cij = 0.05){
     Pnew <- matrix(rep(comtraits[, 5] / sum(comtraits[, 5]), nrow(comtraits)), 
                    nrow = nrow(comtraits), ncol = nrow(comtraits))
     P <- Pdens * Pcont # Combine density and proportion contact matrices to get the P matrix
-    # G<-B.m*P*Gsetup # Multiply G setup with P and Beta-matrix to get the G-matrix (Old formulation)
     G <- B.m * Gsetup * Pnew # (New formulation? Matches Allen et al. 2011 better...)
   }
   
