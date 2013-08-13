@@ -1,4 +1,9 @@
-# Tweak to the vioplot() function to allow plotting two distributions on one split violin
+# Small tweak to vioplot() from the vioplot package (by Daniel Adler) to:
+# 1) allow plotting half of a violin (e.g. side = "left")
+# 2) draw a line instead of point at the median value
+# 06-24-2013
+# Maxwell Joseph (maxwellbjoseph@gmail.com)
+
 vioplot2 <- function (x, ..., range = 1.5, h = NULL, ylim = NULL, names = NULL, 
                       horizontal = FALSE, col = "magenta", border = "black", lty = 1, 
                       lwd = 1, rectCol = "black", colMed = "white", pchMed = 19, 
@@ -87,7 +92,6 @@ vioplot2 <- function (x, ..., range = 1.5, h = NULL, ylim = NULL, names = NULL,
              at[i] + ladj*boxwidth/2, 
              q3[i], col = rectCol)
         # median line segment
-        # determine density at median
         lines(x = c(at[i] - radj*med.dens[i], 
                   at[i], 
                   at[i] + ladj*med.dens[i]),
@@ -112,7 +116,10 @@ vioplot2 <- function (x, ..., range = 1.5, h = NULL, ylim = NULL, names = NULL,
               lty = lty)
         rect(q1[i], at[i] - radj*boxwidth/2, q3[i], at[i] + 
                ladj*boxwidth/2, col = rectCol)
-        points(med[i], at[i], pch = pchMed, col = colMed)
+        lines(y = c(at[i] - radj*med.dens[i], 
+                    at[i], 
+                    at[i] + ladj*med.dens[i]),
+              x = rep(med[i],3))
       }
     }
   }
