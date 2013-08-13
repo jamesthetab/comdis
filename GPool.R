@@ -42,7 +42,7 @@
 # A list of control parameters (Nglobal, Bmeth, Bii, globmeth, a, m, R0ii)
 # and species traits (global.pool)
 
-GPool <- function(Nglobal=20, Bmeth="allomr", Bii=0.3, globmeth="allom",
+GPool <- function(Nglobal=20, mode="dens", Bmeth="allomr", Bii=0.3, globmeth="allom",
                   a=1.15, m=1.5, R0ii="TG", min.weight=1, kRecovery=10, seed=runif(1, 1, 10000),
                   k = 0.5, w = 5) {
 	stopifnot(R0ii == "TG" | (class(R0ii) == "numeric" & length(R0ii) == 1))
@@ -109,11 +109,16 @@ GPool <- function(Nglobal=20, Bmeth="allomr", Bii=0.3, globmeth="allom",
     species[, 10] <- (species[, 5] * species[, 8]) / (species[, 6] + species[, 3] + species[, 7])
   }
   
-  stopifnot (species[, 8] >= 0 & species[, 8] <= 1) # Bii must be between 0 and 1
+  if (mode == "freq"){
+    species[, 8] <- species[, 8] * species[, 5]
+  }
+  
+  stopifnot (species[, 8] >= 0) # Bii can't be < 0
   stopifnot (species[, 2] > 0) # birth rate has to be >0
   stopifnot (species[, 3] > 0) # death rate has to be >0
   stopifnot (species[, 6] >= 0) # pathogen-induced mortality can't be negative (pathogens have to reduce survival)
   stopifnot (species[, 7] >= 0) # recovery rate can't be negative
+  stopifnot(mode == "dens" | mode == "freq")
   
   list(Nglobal = Nglobal,
        Bmeth = Bmeth,
@@ -126,7 +131,13 @@ GPool <- function(Nglobal=20, Bmeth="allomr", Bii=0.3, globmeth="allom",
 }
 
 # Examples
-pool.tg <- GPool(globmeth="allom", R0ii="TG", seed=2, k=.1, w=10)
+pool.tg <- GPool(globmeth="allom", R0ii="TG", 
+                 mode = "dens", seed=2, k=.1, w=10)
+hist(pool.tg$global.pool$Bii)
+pool.tg2 <- GPool(globmeth="allom", R0ii="TG", 
+                  mode = "freq", seed=2, k=.1, w=10)
+hist(pool.tg2$global.pool$Bii)
+
 pool.fixed <- GPool(globmeth="allom", R0ii=1)
 
 pairs(pool.tg$global.pool)
