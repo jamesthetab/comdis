@@ -36,7 +36,7 @@
 
 ComPerm2 <- function(pool, kWeightPenalty, mode,
 										comsizes = 2:pool$Nglobal, iter = 10, Kmeth = "free",
-										Nperms = 10, cij=0.05) {   
+										Nperms = 10, cij=0.05, exmeth="stochastic") {   
 	stopifnot(Kmeth == "fixed" | Kmeth == "free")
 	write("generating permutations...", "")
 	# Generate all possible Bii permutations from a global pool
@@ -93,7 +93,7 @@ ComPerm2 <- function(pool, kWeightPenalty, mode,
 	for (p in 1:number.perms){
 		globalpool <- subset(global.perms, permutation == p)
 		dummylist <- list(global.pool = globalpool) # because ComDis extracts the pool from a list
-		runp <- ComDis(dummylist, mode, iter, Kmeth, kWeightPenalty, cij)
+		runp <- ComDis(dummylist, mode, iter, Kmeth, kWeightPenalty, cij, exmeth=exmeth)
 		permutation <- rep(p, nrow(runp$all.data))
 		inversions <- rep(R0.inversions[p], nrow(runp$all.data))
 		rund <- cbind(runp$all.data, permutation, inversions)
@@ -153,8 +153,12 @@ plot.ComPerm2 <- function(run, meth="eff",
 
 #------------------------------------------------------------------------------
 # Example
-pool1 <- GPool(globmeth="allom", Nglobal=6)
-test <- ComPerm2(pool1, mode="freq", 
-								 kWeightPenalty=3, iter=10, Kmeth="free", cij=.05, Nperms=40)
+pool1 <- GPool(globmeth="allom", Nglobal=6, a=2)
+test <- ComPerm2(pool1, mode="freq", exmeth="deterministic",
+								 iter=1, Kmeth="free", cij=.5)
 plot(test, meth="traj")
 plot(test, meth="eff", alpha=0.3)
+
+test <- ComPerm2(pool1, mode="freq", exmeth="stochastic",
+                 kWeightPenalty=3, iter=10, Kmeth="free", cij=.05)
+plot(test, meth="traj")
