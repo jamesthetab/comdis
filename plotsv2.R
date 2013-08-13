@@ -91,26 +91,29 @@ determ.d <- array(dim=c(1, 4))
 colnames(determ.d) <- c("permutation", "inversions", "delta.Ro", "percent.dR0")
 
 for (i in 1:niter){
-  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k, w=w)
   #### freq/free
+  pool1 <- GPool(globmeth="allom", R0ii="TG", mode="freq", Nglobal=5, a=3, k=k, w=w)
   test1 <- ComPerm2(pool1, mode="freq", exmeth="deterministic", kWeightPenalty=1, 
                     iter=1, Kmeth="free", cij=.1)
   sub1 <- subset(test1$data, !is.na(delta.Ro))
   sub1$percent.dR0 <- with(sub1, Ro / (Ro - delta.Ro))
   determ.d <- rbind(determ.d, sub1[, c(9, 10, 7, 11)])
   #### dens/free
+  pool1 <- GPool(globmeth="allom", R0ii="TG", mode="dens", Nglobal=5, a=3, k=k, w=w)
   test2 <- ComPerm2(pool1, mode="dens", exmeth="deterministic", kWeightPenalty=1, 
                     iter=1, Kmeth="free", cij=.1)
   sub2 <- subset(test2$data, !is.na(delta.Ro))
   sub2$percent.dR0 <- with(sub2, Ro / (Ro - delta.Ro))
   determ.d <- rbind(determ.d, sub2[, c(9, 10, 7, 11)])
   #### freq/fixed
+  pool1 <- GPool(globmeth="allom", R0ii="TG", mode="freq", Nglobal=5, a=3, k=k, w=w)
   test3 <- ComPerm2(pool1, mode="freq", exmeth="deterministic", kWeightPenalty=1, 
                     iter=1, Kmeth="fixed", cij=.1)
   sub3 <- subset(test3$data, !is.na(delta.Ro))
   sub3$percent.dR0 <- with(sub3, Ro / (Ro - delta.Ro))
   determ.d <- rbind(determ.d, sub3[, c(9, 10, 7, 11)])
   #### dens/fixed
+  pool1 <- GPool(globmeth="allom", R0ii="TG", mode="dens", Nglobal=5, a=3, k=k, w=w)
   test4 <- ComPerm2(pool1, mode="dens", exmeth="deterministic", kWeightPenalty=1, 
                     iter=1, Kmeth="fixed", cij=.1)
   sub4 <- subset(test4$data, !is.na(delta.Ro))
@@ -159,26 +162,29 @@ par(mfrow=c(1,1))
 plot(pool1$global.pool$weight, 1-P.ex, type="l", ylab="Pr(extirpation)")
 
 for (i in 1:niter){
-  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k, w=w)
   #### freq/free
+  pool1 <- GPool(globmeth="allom", R0ii="TG", mode="freq", Nglobal=5, a=3, k=k, w=w)
   test1 <- ComPerm2(pool1, mode="freq", exmeth="stochastic", kWeightPenalty=1, 
                     iter=1, Kmeth="free", cij=.1)
   sub1 <- subset(test1$data, !is.na(delta.Ro))
   sub1$percent.dR0 <- with(sub1, Ro / (Ro - delta.Ro))
   stoch.d <- rbind(stoch.d, sub1[, c(9, 10, 7, 11)])
   #### dens/free
+  pool1 <- GPool(globmeth="allom", R0ii="TG", mode="dens", Nglobal=5, a=3, k=k, w=w)
   test2 <- ComPerm2(pool1, mode="dens", exmeth="stochastic", kWeightPenalty=1, 
                     iter=1, Kmeth="free", cij=.1)
   sub2 <- subset(test2$data, !is.na(delta.Ro))
   sub2$percent.dR0 <- with(sub2, Ro / (Ro - delta.Ro))
   stoch.d <- rbind(stoch.d, sub2[, c(9, 10, 7, 11)])
   #### freq/fixed
+  pool1 <- GPool(globmeth="allom", R0ii="TG", mode="freq", Nglobal=5, a=3, k=k, w=w)
   test3 <- ComPerm2(pool1, mode="freq", exmeth="stochastic", kWeightPenalty=1, 
                     iter=1, Kmeth="fixed", cij=.1)
   sub3 <- subset(test3$data, !is.na(delta.Ro))
   sub3$percent.dR0 <- with(sub3, Ro / (Ro - delta.Ro))
   stoch.d <- rbind(stoch.d, sub3[, c(9, 10, 7, 11)])
   #### dens/fixed
+  pool1 <- GPool(globmeth="allom", R0ii="TG", mode="dens", Nglobal=5, a=3, k=k, w=w)
   test4 <- ComPerm2(pool1, mode="dens", exmeth="stochastic", kWeightPenalty=1, 
                     iter=1, Kmeth="fixed", cij=.1)
   sub4 <- subset(test4$data, !is.na(delta.Ro))
@@ -219,26 +225,29 @@ par(mfrow=c(1,1))
 plot(pool1$global.pool$weight, 1-P.ex, type="l", ylab="Pr(extirpation)")
 
 for (i in 1:niter){
-  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k, w=w)
   #### freq/free
+  pool1 <- GPool(globmeth="allom", R0ii="TG", mode="freq", Nglobal=5, a=3, k=k, w=w)
   test1 <- ComPerm2(pool1, mode="freq", exmeth="stochastic", kWeightPenalty=0, 
                     iter=1, Kmeth="free", cij=.1)
   sub1 <- subset(test1$data, !is.na(delta.Ro))
   sub1$percent.dR0 <- with(sub1, Ro / (Ro - delta.Ro))
   rand.d <- rbind(rand.d, sub1[, c(9, 10, 7, 11)])
   #### dens/free
+  pool1 <- GPool(globmeth="allom", R0ii="TG", mode="dens", Nglobal=5, a=3, k=k, w=w)
   test2 <- ComPerm2(pool1, mode="dens", exmeth="stochastic", kWeightPenalty=0, 
                     iter=1, Kmeth="free", cij=.1)
   sub2 <- subset(test2$data, !is.na(delta.Ro))
   sub2$percent.dR0 <- with(sub2, Ro / (Ro - delta.Ro))
   rand.d <- rbind(rand.d, sub2[, c(9, 10, 7, 11)])
   #### freq/fixed
+  pool1 <- GPool(globmeth="allom", R0ii="TG", mode="freq", Nglobal=5, a=3, k=k, w=w)
   test3 <- ComPerm2(pool1, mode="freq", exmeth="stochastic", kWeightPenalty=0, 
                     iter=1, Kmeth="fixed", cij=.1)
   sub3 <- subset(test3$data, !is.na(delta.Ro))
   sub3$percent.dR0 <- with(sub3, Ro / (Ro - delta.Ro))
   rand.d <- rbind(rand.d, sub3[, c(9, 10, 7, 11)])
   #### dens/fixed
+  pool1 <- GPool(globmeth="allom", R0ii="TG", mode="dens", Nglobal=5, a=3, k=k, w=w)
   test4 <- ComPerm2(pool1, mode="dens", exmeth="stochastic", kWeightPenalty=0, 
                     iter=1, Kmeth="fixed", cij=.1)
   sub4 <- subset(test4$data, !is.na(delta.Ro))
@@ -351,7 +360,7 @@ mtext("Figure 2: Effects of extirpation on disease risk",
 ################
 ### Figure 3 ###
 ################
-pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k, w=w)
+pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k, w=w, mode="dens")
 #27
 pool1
 #### dens/fixed
@@ -373,22 +382,6 @@ for (i in 1:length(cij)){
 z2 <- c(t(z))
 df1 <- data.frame(x, y, z2)
 
-#### freq/free
-z <- matrix(NA, nrow=length(cij), ncol=11)
-
-for (i in 1:length(cij)){
-  d <- ComPerm2(pool1, mode="freq", iter=1, Kmeth="free", cij=cij[i], exmeth="deterministic")
-  subd <- subset(d$data, !is.na(delta.Ro))
-  for (inv in unique(subd$inversions)){
-    rows <- which(subd$inversions == inv)
-    mean.eff <- mean(subd$delta.Ro[rows], na.rm=T)
-    z[i, inv+1] <- mean.eff
-  }
-}
-
-z2 <- c(t(z))
-df2 <- data.frame(x, y, z2)
-
 #### dens/free
 z <- matrix(NA, nrow=length(cij), ncol=11)
 for (i in 1:length(cij)){
@@ -403,6 +396,25 @@ for (i in 1:length(cij)){
 
 z2 <- c(t(z))
 df3 <- data.frame(x, y, z2)
+
+
+#### freq/free
+# First, adjust Bii values to account for freq dep trans
+pool1$global.pool$Bii <- pool1$global.pool$Bii * pool1$global.pool$K
+z <- matrix(NA, nrow=length(cij), ncol=11)
+
+for (i in 1:length(cij)){
+  d <- ComPerm2(pool1, mode="freq", iter=1, Kmeth="free", cij=cij[i], exmeth="deterministic")
+  subd <- subset(d$data, !is.na(delta.Ro))
+  for (inv in unique(subd$inversions)){
+    rows <- which(subd$inversions == inv)
+    mean.eff <- mean(subd$delta.Ro[rows], na.rm=T)
+    z[i, inv+1] <- mean.eff
+  }
+}
+
+z2 <- c(t(z))
+df2 <- data.frame(x, y, z2)
 
 
 #### freq/fixed
@@ -426,6 +438,7 @@ df4 <- data.frame(x, y, z2)
 alld <- rbind(df1, df2, df3, df4)
 alld$group <- rep(c("dens/fixed", "freq/free", "dens/free", "freq/fixed"), each=nrow(df1))
 
+require(ggplot2)
 p5 <- ggplot(alld, aes(x=x, y=y, z=z2)) + 
   theme(panel.background = element_rect(color="grey", fill="white"),
         panel.grid.minor=element_blank(), panel.grid.major=element_blank())+
@@ -440,8 +453,9 @@ p5
 require(directlabels)
 direct.label(p5,list("top.points",cex=.7))
 
+
+
 require(lattice)
-filled.contour(x=df4$x, y=df4$y, z=df1$z2)
 wireframe(z2 ~ x*y|group, data=alld)
 
 ramp <- colorRamp(c("red", "white", "blue"))
@@ -607,7 +621,8 @@ for (j in 1:iters){
   print(paste("Beginning overall iteration ", j))
 # dens/fixed
 for (i in 1:length(a)){
-  pool1 <- GPool(globmeth="allom", Nglobal=5, a=a[i], R0ii="TG", k=.5, w=1.5, seed=seeds[j])
+  pool1 <- GPool(globmeth="allom", Nglobal=5, a=a[i], mode="dens",
+                 R0ii="TG", k=.5, w=1.5, seed=seeds[j])
   d <- ComPerm2(pool1, mode="dens", iter=1, Kmeth="fixed", cij=.1, exmeth="deterministic")
   subd <- subset(d$data, !is.na(delta.Ro))
   for (inv in unique(subd$inversions)){
@@ -625,7 +640,8 @@ adf1 <- data.frame(x, y, z2, group="dens/fixed", iter=j)
 # freq/free
 z <- matrix(NA, nrow=length(a), ncol=ninversions)
 for (i in 1:length(a)){
-  pool1 <- GPool(globmeth="allom", Nglobal=5, a=a[i], R0ii="TG", k=.5, w=1.5, seed=seeds[j])
+  pool1 <- GPool(globmeth="allom", Nglobal=5, a=a[i], mode="freq",
+                 R0ii="TG", k=.5, w=1.5, seed=seeds[j])
   d <- ComPerm2(pool1, mode="freq", iter=1, Kmeth="free", cij=.1, exmeth="deterministic")
   subd <- subset(d$data, !is.na(delta.Ro))
   for (inv in unique(subd$inversions)){
@@ -643,7 +659,8 @@ adf2 <- data.frame(x, y, z2, group="freq/free", iter=j)
 # dens/free
 z <- matrix(NA, nrow=length(a), ncol=ninversions)
 for (i in 1:length(a)){
-  pool1 <- GPool(globmeth="allom", Nglobal=5, a=a[i], R0ii="TG", k=.5, w=1.5, seed=seeds[j])
+  pool1 <- GPool(globmeth="allom", Nglobal=5, a=a[i], mode="dens",
+                 R0ii="TG", k=.5, w=1.5, seed=seeds[j])
   d <- ComPerm2(pool1, mode="dens", iter=1, Kmeth="free", cij=.1, exmeth="deterministic")
   subd <- subset(d$data, !is.na(delta.Ro))
   for (inv in unique(subd$inversions)){
@@ -661,7 +678,8 @@ adf3 <- data.frame(x, y, z2, group="dens/free", iter=j)
 # freq/fixed
 z <- matrix(NA, nrow=length(a), ncol=ninversions)
 for (i in 1:length(a)){
-  pool1 <- GPool(globmeth="allom", Nglobal=5, a=a[i], R0ii="TG", k=.5, w=1.5, seed=seeds[j])
+  pool1 <- GPool(globmeth="allom", Nglobal=5, a=a[i], mode="freq",
+                 R0ii="TG", k=.5, w=1.5, seed=seeds[j])
   d <- ComPerm2(pool1, mode="freq", iter=1, Kmeth="fixed", cij=.1, exmeth="deterministic")
   subd <- subset(d$data, !is.na(delta.Ro))
   for (inv in unique(subd$inversions)){
@@ -703,10 +721,6 @@ require(directlabels)
 direct.label(ap5,list("top.points",cex=.7))
 
 
-require(foreach)
-getDoParWorkers()
-
-
 
 
 
@@ -734,8 +748,8 @@ colnames(d1) <- c("permutation", "inversions", "delta.Ro", "percent.dR0")
 
 
 for (i in 1:niter){
-  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[1], w=w[1])
   #### freq/free
+  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[1], w=w[1], mode="freq")
   test1 <- ComPerm2(pool1, mode="freq", exmeth="deterministic",
                     iter=1, Kmeth="free", cij=.1)
   sub1 <- subset(test1$data, !is.na(delta.Ro))
@@ -743,18 +757,21 @@ for (i in 1:niter){
   sub1$percent.dR0 <- with(sub1, Ro / (Ro - delta.Ro))
   d1 <- rbind(d1, sub1[, c(9, 10, 7, 11)])
   #### dens/free
+  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[1], w=w[1], mode="dens")
   test2 <- ComPerm2(pool1, mode="dens", exmeth="deterministic",
                     iter=1, Kmeth="free", cij=.1)
   sub2 <- subset(test2$data, !is.na(delta.Ro))
   sub2$percent.dR0 <- with(sub2, Ro / (Ro - delta.Ro))
   d1 <- rbind(d1, sub2[, c(9, 10, 7, 11)])
   #### freq/fixed
+  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[1], w=w[1], mode="freq")
   test3 <- ComPerm2(pool1, mode="freq", exmeth="deterministic",
                     iter=1, Kmeth="fixed", cij=.1)
   sub3 <- subset(test3$data, !is.na(delta.Ro))
   sub3$percent.dR0 <- with(sub3, Ro / (Ro - delta.Ro))
   d1 <- rbind(d1, sub3[, c(9, 10, 7, 11)])
   #### dens/fixed
+  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[1], w=w[1], mode="dens")
   test4 <- ComPerm2(pool1, mode="dens", exmeth="deterministic",
                     iter=1, Kmeth="fixed", cij=.1)
   sub4 <- subset(test4$data, !is.na(delta.Ro))
@@ -776,8 +793,8 @@ d2 <- array(dim=c(1, 4)) # 4 scenarios X 100 communities X number of rows for ea
 colnames(d2) <- c("permutation", "inversions", "delta.Ro", "percent.dR0")
 
 for (i in 1:niter){
-  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[2], w=w[2])
   #### freq/free
+  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[2], w=w[2], mode="freq")
   test1 <- ComPerm2(pool1, mode="freq", exmeth="deterministic",
                     iter=1, Kmeth="free", cij=.1)
   sub1 <- subset(test1$data, !is.na(delta.Ro))
@@ -785,18 +802,21 @@ for (i in 1:niter){
   sub1$percent.dR0 <- with(sub1, Ro / (Ro - delta.Ro))
   d2 <- rbind(d2, sub1[, c(9, 10, 7, 11)])
   #### dens/free
+  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[2], w=w[2], mode="dens")
   test2 <- ComPerm2(pool1, mode="dens", exmeth="deterministic",
                     iter=1, Kmeth="free", cij=.1)
   sub2 <- subset(test2$data, !is.na(delta.Ro))
   sub2$percent.dR0 <- with(sub2, Ro / (Ro - delta.Ro))
   d2 <- rbind(d2, sub2[, c(9, 10, 7, 11)])
   #### freq/fixed
+  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[2], w=w[2], mode="freq")
   test3 <- ComPerm2(pool1, mode="freq", exmeth="deterministic",
                     iter=1, Kmeth="fixed", cij=.1)
   sub3 <- subset(test3$data, !is.na(delta.Ro))
   sub3$percent.dR0 <- with(sub3, Ro / (Ro - delta.Ro))
   d2 <- rbind(d2, sub3[, c(9, 10, 7, 11)])
   #### dens/fixed
+  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[2], w=w[2], mode="dens")
   test4 <- ComPerm2(pool1, mode="dens", exmeth="deterministic",
                     iter=1, Kmeth="fixed", cij=.1)
   sub4 <- subset(test4$data, !is.na(delta.Ro))
@@ -818,8 +838,8 @@ colnames(d3) <- c("permutation", "inversions", "delta.Ro", "percent.dR0")
 
 
 for (i in 1:niter){
-  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[3], w=w[3])
   #### freq/free
+  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[3], w=w[3], mode="freq")
   test1 <- ComPerm2(pool1, mode="freq", exmeth="deterministic",
                     iter=1, Kmeth="free", cij=.1)
   sub1 <- subset(test1$data, !is.na(delta.Ro))
@@ -827,18 +847,21 @@ for (i in 1:niter){
   sub1$percent.dR0 <- with(sub1, Ro / (Ro - delta.Ro))
   d3 <- rbind(d3, sub1[, c(9, 10, 7, 11)])
   #### dens/free
+  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[3], w=w[3], mode="dens")
   test2 <- ComPerm2(pool1, mode="dens", exmeth="deterministic",
                     iter=1, Kmeth="free", cij=.1)
   sub2 <- subset(test2$data, !is.na(delta.Ro))
   sub2$percent.dR0 <- with(sub2, Ro / (Ro - delta.Ro))
   d3 <- rbind(d3, sub2[, c(9, 10, 7, 11)])
   #### freq/fixed
+  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[3], w=w[3], mode="freq")
   test3 <- ComPerm2(pool1, mode="freq", exmeth="deterministic",
                     iter=1, Kmeth="fixed", cij=.1)
   sub3 <- subset(test3$data, !is.na(delta.Ro))
   sub3$percent.dR0 <- with(sub3, Ro / (Ro - delta.Ro))
   d3 <- rbind(d3, sub3[, c(9, 10, 7, 11)])
   #### dens/fixed
+  pool1 <- GPool(globmeth="allom", R0ii="TG", Nglobal=5, a=3, k=k[3], w=w[3], mode="dens")
   test4 <- ComPerm2(pool1, mode="dens", exmeth="deterministic",
                     iter=1, Kmeth="fixed", cij=.1)
   sub4 <- subset(test4$data, !is.na(delta.Ro))
